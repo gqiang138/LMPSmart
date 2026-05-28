@@ -290,10 +290,8 @@ def read_dump(
     dfdump[["id", "type"]] = dfdump[["id", "type"]].astype(int)
     dfdump = dfdump.sort_values(["frame", "id"], ascending=True)
     if dfatoms is not None:
-        if "mass" not in dfdump.columns.tolist():
-            dfdump = dfdump.merge(dfatoms, how="left", on="type")
-        else:
-            dfdump = dfdump.merge(dfatoms[["type", "element"]], how="left", on="type")
+        merge_src = dfatoms[["type", "mass", "element"]].drop_duplicates("type")
+        dfdump = dfdump.merge(merge_src, how="left", on="type")
     return dfdump
 
 
@@ -386,16 +384,23 @@ def read_species(
             continue
         no_moles = int(parts[1])
         no_specs = int(parts[2])
-        row = {"frame": frame - int(ignored_time * 1000 / timestep), "No_Moles": no_moles, "No_Specs": no_specs}
+        adjusted_frame = frame - int(ignored_time * 1000 / timestep)
         for i, sp in enumerate(species_names):
             if i + 3 < len(parts):
-                row[sp] = int(parts[i + 3])
-        rows.append(row)
+                count = int(parts[i + 3])
+                if count > 0:
+                    rows.append({
+                        "frame": adjusted_frame,
+                        "No_Moles": no_moles,
+                        "No_Specs": no_specs,
+                        "molecule": sp,
+                        "count": count,
+                    })
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
     df["frame"] = df["frame"].astype(int)
-    df = df.sort_values("frame", ascending=True).reset_index(drop=True)
+    df = df.sort_values(["frame", "molecule"], ascending=[True, True]).reset_index(drop=True)
     df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
     return df
 
@@ -436,7 +441,7 @@ def read_pos(
                         cz = float(parts[7]) if parts[6] == "CoM_z" else float(parts[6])
                         if current_frame is not None:
                             frames_data[current_frame].append(
-                                {"x": cx, "y": cy, "z": cz, "element": mol_type}
+                                {"x": cx, "y": cy, "z": cz, "molecule": mol_type}
                             )
                     except (ValueError, IndexError):
                         continue
@@ -462,7 +467,7 @@ def read_pos(
                     "x": float(parts[1]),
                     "y": float(parts[2]),
                     "z": float(parts[3]),
-                    "element": parts[4] if len(parts) > 4 else "X",
+                    "molecule": parts[4] if len(parts) > 4 else "X",
                 }
             )
     rows = []
@@ -474,7 +479,7 @@ def read_pos(
                     "x": atom["x"],
                     "y": atom["y"],
                     "z": atom["z"],
-                    "element": atom.get("element", "X"),
+                    "molecule": atom.get("molecule", "X"),
                 }
             )
     dfpos = pd.DataFrame(rows)
@@ -495,6 +500,43 @@ def read_ovito(
         df["frame"] = df["frame"].astype(int)
         df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
     return df
+
+
+def read_paraments(input_path: str) -> dict[str, Any]:
+    paraments_file = os.path.join(input_path, "paraments.txt")
+    if not os.path.exists(paraments_file):
+        return {}
+    params = {}
+    with open(paraments_file, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                key, val = line.split("=", 1)
+                key = key.strip()
+                val = val.strip()
+                if "," in key and "{" not in val:
+                    parts = [p.strip() for p in val.split(",")]
+                    params["supercell"] = tuple(int(p) for p in parts)
+                elif "," in val and "{" not in val:
+                    parts = [p.strip() for p in val.split(",")]
+                    if len(parts) == 3:
+                        params["supercell"] = tuple(int(p) for p in parts)
+                    else:
+                        try:
+                            params[key] = float(parts[0]) if "." in parts[0] else int(parts[0])
+                        except ValueError:
+                            params[key] = val
+                else:
+                    try:
+                        params[key] = float(val)
+                    except ValueError:
+                        try:
+                            params[key] = int(val)
+                        except ValueError:
+                            params[key] = val
+    return params
 
 
 def read_general(
@@ -534,6 +576,11 @@ def arrange(
     if output_path is None:
         output_path = input_path
     os.makedirs(output_path, exist_ok=True)
+
+    params = read_paraments(input_path)
+    timestep = params.get("timestep", timestep)
+    if supercell is None and "supercell" in params:
+        supercell = params["supercell"]
 
     results = {}
     data_pattern = config.filerule1.datafilename

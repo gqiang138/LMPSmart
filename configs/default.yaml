@@ -119,6 +119,8 @@ filerule2:
   customfilename: "abc*.csv"
 
 plotset:
+  sns_style: ticks
+  palette: tab10
   multifig:
     width: 14
     high: 6
@@ -136,11 +138,21 @@ plotset:
     labelsize: 16
     ticksize: 14
     fontscale: 1.5
+    sns_style: ticks
+    palette: tab10
   doubleyscale:
+    width: 10
+    high: 6
+    dpi: 600
+    labelsize: 16
+    ticksize: 14
+    fontscale: 1.5
     y1color: "black"
     y2color: "red"
     y2tickcolor: "red"
     y2labelcolor: "red"
+    sns_style: ticks
+    palette: tab10
   figallscale:
     loc: ""
     mark: false

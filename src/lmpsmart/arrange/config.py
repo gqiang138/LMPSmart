@@ -28,7 +28,7 @@ class FileRule1(BaseModel):
     generalfilename: str = "*"
 
 
-class PlotSet(BaseModel):
+class PlotSetSingle(BaseModel):
     width: int = 14
     high: int = 6
     dpi: int = 600
@@ -37,6 +37,34 @@ class PlotSet(BaseModel):
     fontscale: float = 1.5
     subadjust_wspace: float = 0.2
     subadjust_hspace: float = 0.2
+    sns_style: str = "ticks"
+    palette: str = "tab10"
+
+
+class PlotSetDoubleY(BaseModel):
+    width: int = 10
+    high: int = 6
+    dpi: int = 600
+    labelsize: int = 16
+    ticksize: int = 18
+    fontscale: float = 1.5
+    sns_style: str = "ticks"
+    palette: str = "tab10"
+    y1color: str = "black"
+    y2color: str = "red"
+    y2tickcolor: str = "red"
+    y2labelcolor: str = "red"
+
+
+class PlotSet(BaseModel):
+    multifig: PlotSetSingle = Field(default_factory=PlotSetSingle)
+    singlescale: PlotSetSingle = Field(default_factory=PlotSetSingle)
+    doubleyscale: PlotSetDoubleY = Field(default_factory=PlotSetDoubleY)
+    sns_style: str = "ticks"
+    palette: str = "tab10"
+
+    def get_mode(self, mode: str) -> PlotSetSingle | PlotSetDoubleY:
+        return getattr(self, mode, self.multifig)
 
 
 class Config(BaseModel):
@@ -60,17 +88,53 @@ class Config(BaseModel):
         )
         filerule1_data = data.get("filerule1", {})
         filerule1 = FileRule1(**filerule1_data)
-        plotset_data = data.get("plotset", {})
+
+        ps_data = data.get("plotset", {})
+        global_sns = ps_data.get("sns_style", "ticks")
+        global_pal = ps_data.get("palette", "tab10")
+
+        def _ps_from_dict(d: dict) -> PlotSetSingle:
+            return PlotSetSingle(
+                width=d.get("width", 14),
+                high=d.get("high", 6),
+                dpi=d.get("dpi", 600),
+                labelsize=d.get("labelsize", 20),
+                ticksize=d.get("ticksize", 18),
+                fontscale=d.get("fontscale", 1.5),
+                subadjust_wspace=d.get("subadjust", {}).get("wspace", 0.2),
+                subadjust_hspace=d.get("subadjust", {}).get("hspace", 0.2),
+                sns_style=d.get("sns_style", global_sns),
+                palette=d.get("palette", global_pal),
+            )
+
+        def _ps_double_from_dict(d: dict) -> PlotSetDoubleY:
+            return PlotSetDoubleY(
+                width=d.get("width", 10),
+                high=d.get("high", 6),
+                dpi=d.get("dpi", 600),
+                labelsize=d.get("labelsize", 16),
+                ticksize=d.get("ticksize", 18),
+                fontscale=d.get("fontscale", 1.5),
+                sns_style=d.get("sns_style", global_sns),
+                palette=d.get("palette", global_pal),
+                y1color=d.get("y1color", "black"),
+                y2color=d.get("y2color", "red"),
+                y2tickcolor=d.get("y2tickcolor", "red"),
+                y2labelcolor=d.get("y2labelcolor", "red"),
+            )
+
+        multifig_data = ps_data.get("multifig", {})
+        singlescale_data = ps_data.get("singlescale", {})
+        doubleyscale_data = ps_data.get("doubleyscale", {})
+
         plotset = PlotSet(
-            width=plotset_data.get("multifig", {}).get("width", 14),
-            high=plotset_data.get("multifig", {}).get("high", 6),
-            dpi=plotset_data.get("multifig", {}).get("dpi", 600),
-            labelsize=plotset_data.get("multifig", {}).get("labelsize", 20),
-            ticksize=plotset_data.get("multifig", {}).get("ticksize", 18),
-            fontscale=plotset_data.get("multifig", {}).get("fontscale", 1.5),
-            subadjust_wspace=plotset_data.get("multifig", {}).get("subadjust", {}).get("wspace", 0.2),
-            subadjust_hspace=plotset_data.get("multifig", {}).get("subadjust", {}).get("hspace", 0.2),
+            multifig=_ps_from_dict(multifig_data),
+            singlescale=_ps_from_dict(singlescale_data),
+            doubleyscale=_ps_double_from_dict(doubleyscale_data),
+            sns_style=global_sns,
+            palette=global_pal,
         )
+
         return cls(
             cutoff=cutoff,
             filerule1=filerule1,
