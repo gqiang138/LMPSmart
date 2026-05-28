@@ -27,6 +27,7 @@ def cmd_arrange(args):
         ignored_time=args.ignored_time,
         timestep=args.timestep,
         encoding=args.encoding,
+        output_path=args.output if getattr(args, "output", None) else args.path,
     )
     print(json.dumps({"status": "success", "modes": modes, "files": list(result.keys())}))
     return 0
@@ -147,6 +148,7 @@ def main():
     sp.add_argument("--timestep", type=float, default=0.1)
     sp.add_argument("--encoding", default="utf-8")
     sp.add_argument("--ignored-time", type=float, default=0.0)
+    sp.add_argument("--output", help="Output directory (default: same as input)")
 
     sm = sub.add_parser("smooth", help="Smooth time-series data")
     sm.add_argument("--data", required=True, help="JSON list or file path")

@@ -37,21 +37,30 @@ def df_atoms(data_path: str) -> list[dict]:
     atoms_data = []
     for line in lines:
         stripped = line.strip()
-        if "Atoms" in stripped and ("full" in stripped or "charge" in stripped or "bond" in stripped):
+        if "Atoms" in stripped:
             atoms_section = True
             continue
         if atoms_section:
-            if stripped == "" or stripped.isdigit():
+            if stripped == "":
+                continue
+            if stripped.isdigit():
                 break
             parts = stripped.split()
             if len(parts) >= 4:
                 atom_id = int(parts[0])
-                mol_id = int(parts[1])
-                atom_type = int(parts[2])
-                x, y, z = float(parts[3]), float(parts[4]), float(parts[5])
-                atoms_data.append(
-                    {"id": atom_id, "molecule": mol_id, "type": atom_type, "x": x, "y": y, "z": z}
-                )
+                if len(parts) == 6:
+                    atom_type = int(parts[1])
+                    x, y, z = float(parts[3]), float(parts[4]), float(parts[5])
+                    atoms_data.append(
+                        {"id": atom_id, "molecule": 0, "type": atom_type, "x": x, "y": y, "z": z}
+                    )
+                else:
+                    mol_id = int(parts[1])
+                    atom_type = int(parts[2])
+                    x, y, z = float(parts[3]), float(parts[4]), float(parts[5])
+                    atoms_data.append(
+                        {"id": atom_id, "molecule": mol_id, "type": atom_type, "x": x, "y": y, "z": z}
+                    )
     return atoms_data
 
 
@@ -66,12 +75,22 @@ def df_masses(data_path: str) -> pd.DataFrame:
             masses_section = True
             continue
         if masses_section:
-            if stripped == "" or stripped.isdigit():
-                break
+            if stripped == "":
+                continue
             parts = stripped.split()
+            if not parts or not parts[0].isdigit():
+                break
             if len(parts) >= 2:
                 try:
-                    masses_data.append({"type": int(parts[0]), "mass": float(parts[1])})
+                    atom_type = int(parts[0])
+                    mass = float(parts[1])
+                    element = "X"
+                    raw_line = line.strip()
+                    if "#" in raw_line:
+                        elem_part = raw_line.split("#", 1)[1].strip()
+                        if elem_part:
+                            element = elem_part.split()[0].strip()
+                    masses_data.append({"type": atom_type, "mass": mass, "element": element})
                 except ValueError:
                     continue
     return pd.DataFrame(masses_data)
@@ -334,19 +353,50 @@ def read_species(
     timestep: float = 0.1,
     encoding: str = "utf-8",
 ) -> pd.DataFrame:
-    ext = Path(species_path).suffix.lower()
-    if ext == ".csv":
-        df = pd.read_csv(species_path, encoding=encoding)
-    elif ext in [".xlsx", ".xls"]:
-        df = pd.read_excel(species_path)
-    else:
-        df = autocode(species_path, "pandas")
-    df.columns = [c.strip() for c in df.columns]
-    if "frame" not in df.columns and "Step" in df.columns:
-        df = df.rename(columns={"Step": "frame"})
-        df["frame"] = df["frame"].astype(int) - int(ignored_time * 1000 / timestep)
-        df["frame"] = df["frame"].astype(int)
-        df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
+    with open(species_path, encoding=encoding) as f:
+        lines = f.readlines()
+    rows = []
+    species_names = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            parts = stripped.split()
+            if "Timestep" in parts:
+                ts_idx = parts.index("Timestep")
+                try:
+                    frame = int(parts[ts_idx + 1])
+                except (ValueError, IndexError):
+                    pass
+            name_parts = [p for p in stripped.split("#")[-1].split() if p]
+            if name_parts:
+                new_sp = [n for n in name_parts
+                          if n not in ("Timestep", "No_Moles", "No_Specs")]
+                for sp in new_sp:
+                    if sp not in species_names:
+                        species_names.append(sp)
+            continue
+        if not stripped:
+            continue
+        parts = stripped.split()
+        if len(parts) < 2:
+            continue
+        try:
+            frame = int(parts[0])
+        except ValueError:
+            continue
+        no_moles = int(parts[1])
+        no_specs = int(parts[2])
+        row = {"frame": frame - int(ignored_time * 1000 / timestep), "No_Moles": no_moles, "No_Specs": no_specs}
+        for i, sp in enumerate(species_names):
+            if i + 3 < len(parts):
+                row[sp] = int(parts[i + 3])
+        rows.append(row)
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    df["frame"] = df["frame"].astype(int)
+    df = df.sort_values("frame", ascending=True).reset_index(drop=True)
+    df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
     return df
 
 
@@ -357,33 +407,64 @@ def read_pos(
     encoding: str = "utf-8",
 ) -> pd.DataFrame:
     with open(pos_path, encoding=encoding) as f:
-        lines = f.readlines()
+        raw_lines = f.readlines()
+    lines = [ln.rstrip("\n") for ln in raw_lines]
+    is_species_com = any("Timestep" in ln and "NMole" in ln for ln in lines[:10])
     frames_data = {}
     current_frame = None
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped.startswith("#"):
-            continue
-        parts = stripped.split()
-        if len(parts) < 4:
-            continue
-        try:
-            frame = int(float(parts[0]))
-        except ValueError:
-            continue
-        if frame != current_frame:
-            current_frame = frame
-            frames_data[frame] = []
-        frames_data[frame].append(
-            {
-                "x": float(parts[1]),
-                "y": float(parts[2]),
-                "z": float(parts[3]),
-                "element": parts[4] if len(parts) > 4 else "X",
-            }
-        )
+    if is_species_com:
+        for line in lines:
+            if "Timestep" in line and "NMole" in line:
+                parts = line.split()
+                try:
+                    ts_idx = parts.index("Timestep")
+                    current_frame = int(parts[ts_idx + 1])
+                except (ValueError, IndexError):
+                    continue
+                if current_frame not in frames_data:
+                    frames_data[current_frame] = []
+            elif line.startswith("ID\t") or line.startswith("ID"):
+                continue
+            elif "\t" in line:
+                parts = line.split("\t")
+                if len(parts) >= 7:
+                    try:
+                        mol_id = int(parts[0])
+                        mol_type = parts[2].strip()
+                        cx = float(parts[5]) if parts[4] == "CoM_x" else float(parts[4])
+                        cy = float(parts[6]) if parts[5] == "CoM_y" else float(parts[5])
+                        cz = float(parts[7]) if parts[6] == "CoM_z" else float(parts[6])
+                        if current_frame is not None:
+                            frames_data[current_frame].append(
+                                {"x": cx, "y": cy, "z": cz, "element": mol_type}
+                            )
+                    except (ValueError, IndexError):
+                        continue
+    else:
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("#"):
+                continue
+            parts = stripped.split()
+            if len(parts) < 4:
+                continue
+            try:
+                frame = int(float(parts[0]))
+            except ValueError:
+                continue
+            if frame != current_frame:
+                current_frame = frame
+                frames_data[frame] = []
+            frames_data[frame].append(
+                {
+                    "x": float(parts[1]),
+                    "y": float(parts[2]),
+                    "z": float(parts[3]),
+                    "element": parts[4] if len(parts) > 4 else "X",
+                }
+            )
     rows = []
     for frame, atoms in frames_data.items():
         for atom in atoms:
@@ -393,7 +474,7 @@ def read_pos(
                     "x": atom["x"],
                     "y": atom["y"],
                     "z": atom["z"],
-                    "element": atom["element"],
+                    "element": atom.get("element", "X"),
                 }
             )
     dfpos = pd.DataFrame(rows)

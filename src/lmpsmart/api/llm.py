@@ -16,7 +16,7 @@ except ImportError:
 
 PROVIDER_LOCAL = "local"
 PROVIDER_ONLINE = "online"
-    AVAILABLE_LOCAL_MODELS = [
+AVAILABLE_LOCAL_MODELS = [
         "qwen3-vl:8b",
         "qwen3:8b",
         "qwen3.5-9b",
