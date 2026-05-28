@@ -788,14 +788,29 @@ tools.forEach((t, i) => {
 // Comparison table
 const comps = [
   {
-    dim: "派生物理量计算\n（RDF/MSD/CED等）",
+    dim: "派生物理量计算\n（RDF/MSD等）",
     vals: ["OVITO ✓✓", "mdapy ✓", "MDAnalysis ✓", "lmpsmart ✓内置+可扩展"],
     color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
-    dim: "自定义指标扩展\n（mweight/rmsd/CED等）",
-    vals: ["OVITO ~(Pro)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓ (addparameters)"],
+    dim: "自定义指标扩展\n（mweight/rmsd等）",
+    vals: ["OVITO ~(Pro)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
     color: ["778DA9", "778DA9", "778DA9", DEEP_BLUE],
+  },
+  {
+    dim: "数据降噪（9种平滑）",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "统计异常值过滤\n（zscore/MAD/IQR）",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "专业绘图（YAML配置）",
+    vals: ["OVITO ✓", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
+    color: ["3D405B", "778DA9", "778DA9", DEEP_BLUE],
   },
   {
     dim: "自然语言命令",
@@ -804,11 +819,6 @@ const comps = [
   },
   {
     dim: "Agent 规划",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
-  },
-  {
-    dim: "平滑算法（9种）",
     vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
     color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
   },
@@ -835,16 +845,16 @@ slide.addText("mdapy", { x: 4.3, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: t
 slide.addText("MDAnalysis", { x: 6.1, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "5F9EA0", align: "center", valign: "middle" });
 slide.addText("lmpsmart", { x: 7.9, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: ACCENT, align: "center", valign: "middle" });
 
-const rowH = 0.40;
+const rowH = 0.33;
 comps.forEach((c, i) => {
   const y = 2.15 + i * rowH;
   const rowBg = i % 2 === 0 ? CARD_BG : LIGHT_BG;
   slide.addShape(pptx.shapes.RECTANGLE, { x: 0.3, y, w: 9.4, h: rowH, fill: { color: rowBg } });
-  slide.addText(c.dim, { x: 0.35, y, w: 2.1, h: rowH, fontSize: 10, bold: true, color: TEXT_DARK, valign: "middle" });
-  slide.addText(c.vals[0], { x: 2.5, y, w: 1.8, h: rowH, fontSize: 10, color: c.color[0], align: "center", valign: "middle" });
-  slide.addText(c.vals[1], { x: 4.3, y, w: 1.8, h: rowH, fontSize: 10, color: c.color[1], align: "center", valign: "middle" });
-  slide.addText(c.vals[2], { x: 6.1, y, w: 1.8, h: rowH, fontSize: 10, color: c.color[2], align: "center", valign: "middle" });
-  slide.addText(c.vals[3], { x: 7.9, y, w: 1.8, h: rowH, fontSize: 10, color: c.color[3], bold: true, align: "center", valign: "middle" });
+  slide.addText(c.dim, { x: 0.35, y, w: 2.1, h: rowH, fontSize: 9, bold: true, color: TEXT_DARK, valign: "middle" });
+  slide.addText(c.vals[0], { x: 2.5, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[0], align: "center", valign: "middle" });
+  slide.addText(c.vals[1], { x: 4.3, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[1], align: "center", valign: "middle" });
+  slide.addText(c.vals[2], { x: 6.1, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[2], align: "center", valign: "middle" });
+  slide.addText(c.vals[3], { x: 7.9, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[3], bold: true, align: "center", valign: "middle" });
 });
 
 // Bottom insight
@@ -854,8 +864,8 @@ slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
   rectRadius: 0.06,
 });
 slide.addText([
-  { text: "lmpsmart = 数据清洗（9平滑+3过滤） + 指标计算（内置+可扩展） + Agent智能 + JSONL可追溯", options: { color: TEXT_LIGHT, fontSize: 12 } },
-  { text: "  |  OVITO/mdapy/MDAnalysis 专注派生物理量（RDF/MSD），lmpsmart 定位为互补前置清洗层", options: { color: MUTED, fontSize: 9 } },
+  { text: "lmpsmart = 数据降噪（9平滑） + 异常值过滤（3种） + 指标计算（内置+可扩展） + Agent + JSONL日志", options: { color: TEXT_LIGHT, fontSize: 11 } },
+  { text: "  |  OVITO/mdapy/MDAnalysis 专注派生物理量（RDF/MSD），lmpsmart 定位为互补前置清洗层", options: { color: "778DA9", fontSize: 9 } },
 ], {
   x: 0.4, y: 5.5, w: 9.2, h: 0.55,
   align: "center", valign: "middle",
