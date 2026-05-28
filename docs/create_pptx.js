@@ -751,58 +751,108 @@ slide.addText("6个子命令  ·  --help 查看详情  ·  --version 显示版�
 });
 
 // ==============================================================
-// Slide 11: GUI vs Agent Comparison
+// Slide 11: lmpsmart vs Other LAMMPS Tools
 // ==============================================================
 slide = pptx.addSlide();
 slide.background = { color: LIGHT_BG };
 
-slide.addText("为什么 Agent 优于 GUI？", {
+slide.addText("lmpsmart vs 主流 LAMMPS 数据处理工具", {
   x: 0.5, y: 0.3, w: 9, h: 0.7,
-  fontSize: 36, bold: true, color: TEXT_DARK, fontFace: "Georgia",
+  fontSize: 34, bold: true, color: TEXT_DARK, fontFace: "Georgia",
   margin: 0,
 });
 
-const comparisons = [
-  { dim: "推理引擎", gui: "无（用户手动决策）", agent: "关键词/LLM自主推理", agentBetter: true },
-  { dim: "工具选择", gui: "用户点击按钮", agent: "Goal → 自动规划", agentBetter: true },
-  { dim: "批量处理", gui: "逐个手动操作", agent: "Glob + split命名", agentBetter: true },
-  { dim: "可追溯性", gui: "用户笔记（不可靠）", agent: "JSONL 自动记录", agentBetter: true },
-  { dim: "LLM集成", gui: "无架构支持", agent: "多Provider即插即用", agentBetter: true },
-  { dim: "无显示环境", gui: "需要图形界面", agent: "纯CLI，服务器可用", agentBetter: true },
+// Tool badges at top
+const tools = [
+  { name: "OVITO", desc: "可视化+分析 · GUI主导", color: "E07A5F" },
+  { name: "mdapy", desc: "快速Python分析 · C++加速", color: "3D405B" },
+  { name: "MDAnalysis", desc: "轨迹分析 · 学术最流行", color: "5F9EA0" },
+  { name: "lmpsmart", desc: "Agent架构 · 全链路可追溯", color: DEEP_BLUE },
+];
+tools.forEach((t, i) => {
+  slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+    x: 0.3 + i * 2.45, y: 1.0, w: 2.3, h: 0.5,
+    fill: { color: t.color },
+    rectRadius: 0.05,
+  });
+  slide.addText(t.name, {
+    x: 0.3 + i * 2.45, y: 1.0, w: 2.3, h: 0.3,
+    fontSize: 13, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle",
+  });
+  slide.addText(t.desc, {
+    x: 0.3 + i * 2.45, y: 1.28, w: 2.3, h: 0.22,
+    fontSize: 8, color: TEXT_LIGHT, align: "center",
+  });
+});
+
+// Comparison table
+const comps = [
+  {
+    dim: "自然语言命令",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "Agent 规划",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "平滑算法",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓ (9种)"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "JSONL 执行日志",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "YAML 配置驱动",
+    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+  },
+  {
+    dim: "批量 Glob 匹配",
+    vals: ["OVITO ✗", "mdapy ~", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", MUTED, "E07A5F", DEEP_BLUE],
+  },
 ];
 
 // Table header
 slide.addShape(pptx.shapes.RECTANGLE, {
-  x: 0.4, y: 1.05, w: 9.2, h: 0.5,
+  x: 0.3, y: 1.65, w: 9.4, h: 0.45,
   fill: { color: DEEP_BLUE },
 });
-slide.addText("对比维度", { x: 0.4, y: 1.05, w: 2.5, h: 0.5, fontSize: 13, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle" });
-slide.addText("Tkinter GUI", { x: 2.9, y: 1.05, w: 3.2, h: 0.5, fontSize: 13, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle" });
-slide.addText("lmpsmart Agent", { x: 6.1, y: 1.05, w: 3.5, h: 0.5, fontSize: 13, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle" });
+slide.addText("对比维度", { x: 0.3, y: 1.65, w: 2.2, h: 0.45, fontSize: 12, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle" });
+slide.addText("OVITO", { x: 2.5, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "E07A5F", align: "center", valign: "middle" });
+slide.addText("mdapy", { x: 4.3, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "3D405B", align: "center", valign: "middle" });
+slide.addText("MDAnalysis", { x: 6.1, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "5F9EA0", align: "center", valign: "middle" });
+slide.addText("lmpsmart", { x: 7.9, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: ACCENT, align: "center", valign: "middle" });
 
-comparisons.forEach((c, i) => {
-  const y = 1.6 + i * 0.65;
+comps.forEach((c, i) => {
+  const y = 2.15 + i * 0.53;
   const rowBg = i % 2 === 0 ? CARD_BG : LIGHT_BG;
-  slide.addShape(pptx.shapes.RECTANGLE, {
-    x: 0.4, y, w: 9.2, h: 0.6,
-    fill: { color: rowBg },
-  });
-  slide.addText(c.dim, { x: 0.5, y, w: 2.3, h: 0.6, fontSize: 12, bold: true, color: TEXT_DARK, valign: "middle" });
-  slide.addText(c.gui, { x: 2.9, y, w: 3.2, h: 0.6, fontSize: 11, color: MUTED, align: "center", valign: "middle" });
-  slide.addText(c.agent, { x: 6.1, y, w: 3.5, h: 0.6, fontSize: 11, color: DEEP_BLUE, bold: true, align: "center", valign: "middle" });
-  // Checkmark for agent
-  slide.addText("✓", { x: 5.7, y, w: 0.4, h: 0.6, fontSize: 14, bold: true, color: "4CAF50", align: "center", valign: "middle" });
+  slide.addShape(pptx.shapes.RECTANGLE, { x: 0.3, y, w: 9.4, h: 0.5, fill: { color: rowBg } });
+  slide.addText(c.dim, { x: 0.35, y, w: 2.1, h: 0.5, fontSize: 12, bold: true, color: TEXT_DARK, valign: "middle" });
+  slide.addText(c.vals[0], { x: 2.5, y, w: 1.8, h: 0.5, fontSize: 11, color: c.color[0], align: "center", valign: "middle" });
+  slide.addText(c.vals[1], { x: 4.3, y, w: 1.8, h: 0.5, fontSize: 11, color: c.color[1], align: "center", valign: "middle" });
+  slide.addText(c.vals[2], { x: 6.1, y, w: 1.8, h: 0.5, fontSize: 11, color: c.color[2], align: "center", valign: "middle" });
+  slide.addText(c.vals[3], { x: 7.9, y, w: 1.8, h: 0.5, fontSize: 11, color: c.color[3], bold: true, align: "center", valign: "middle" });
 });
 
-// Bottom note
+// Bottom insight
 slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
-  x: 2.5, y: 5.55, w: 5, h: 0.45,
-  fill: { color: ACCENT, transparency: 80 },
-  rectRadius: 0.04,
+  x: 0.3, y: 5.4, w: 9.4, h: 0.6,
+  fill: { color: DEEP_BLUE },
+  rectRadius: 0.06,
 });
-slide.addText("GUI 是用户界面，不是 Agent — Agent = 感知+推理+规划+行动+记忆", {
-  x: 2.5, y: 5.55, w: 5, h: 0.45,
-  fontSize: 10, color: ACCENT, align: "center", valign: "middle",
+slide.addText([
+  { text: "lmpsmart 是目前唯一将 Agent 架构 + 信号平滑 + JSONL 可追溯日志整合的 LAMMPS 数据处理工具\n", options: { color: TEXT_LIGHT } },
+  { text: "注：OVITO、mdapy、MDAnalysis 在各自专业领域（可视化/性能/轨迹）各有优势，lmpsmart 定位为互补层", options: { color: MUTED, fontSize: 10 } },
+], {
+  x: 0.5, y: 5.4, w: 9, h: 0.6,
+  fontSize: 13, align: "center", valign: "middle",
 });
 
 // ==============================================================
