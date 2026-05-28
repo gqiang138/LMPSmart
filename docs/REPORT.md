@@ -94,7 +94,7 @@ All methods operate directly on the `value_col` Series without groupby — LAMMP
 An Agent is defined by five core capabilities:感知 (Perceive), 推理 (Reason), 规划 (Plan), 行动 (Act), and 记忆 (Remember). The `LmpparseAgent` class implements all five:
 
 - **Perceive**: Reads input path and natural language goal
-- **Plan**: `plan_from_goal()` uses keyword matching to decompose goals into tool sequences
+- **Plan**: `plan_from_goal()` uses LLM inference (Ollama/OpenAI) with keyword matching as fallback when LLM is unavailable
 - **Act**: `execute()` calls functions from `TOOL_REGISTRY`
 - **Remember**: `ExecutionLogger` writes every call to JSONL
 
@@ -134,14 +134,14 @@ DataFrames are summarized by shape and dtype (not serialized), preventing log bl
 
 | Aspect | Original Tkinter GUI | New Agent Architecture |
 |---|---|---|
-| Reasoning engine | None | Keyword-based plan decomposition |
+| Reasoning engine | None | LLM inference + keyword fallback |
 | Tool selection | User clicks button | Autonomous from goal |
 | Iteration/reflection | None | Execute and log |
 | Config | Partially hardcoded | Fully YAML-driven |
 | Batch processing | Manual, one at a time | Glob + split naming |
 | Reproducibility | Manual (user notes) | Automatic JSONL logging |
 | Entry point | GUI window (requires display) | CLI or Python API |
-| LLM integration | None (planned) | Architecture ready |
+| LLM integration | None | Fully integrated (Ollama + OpenAI-compatible) |
 
 The Tkinter GUI was a user interface, not an Agent. It mapped user clicks to fixed functions without any reasoning, planning, or autonomous decision-making. The重构 preserves all computational logic while wrapping it in an Agent controller that can accept natural language goals.
 
@@ -173,14 +173,15 @@ The execution logger enables complete reproducibility:
 
 ## 9. Limitations and Future Work
 
-**Current limitations**: The `plan_from_goal()` uses simple keyword matching, not LLM inference. The nine smoothing algorithms cover most MD time-series use cases but some physics-informed constraints are simplified.
+**Current status**: LLM inference is fully integrated — `plan_from_goal()` tries Ollama or OpenAI-compatible API first, falls back to keyword matching if LLM is unavailable. Config via `llm setup` (local Ollama or online API).
+
+**Current limitations**: The nine smoothing algorithms cover most MD time-series use cases but some physics-informed constraints are simplified.
 
 **Future directions**:
-1. **LLM integration**: Replace keyword matching with GPT-4o or similar for natural language understanding
-2. **Web UI**: REST API + React frontend for non-CLI users
-3. **Cloud deployment**: Docker container for HPC cluster integration
-4. **Additional formats**: NEB, phonopy, XDATCAR support
-5. **Statistical validation**: Automated hypothesis testing on smoothed vs. raw data
+1. **Web UI**: REST API + React frontend for non-CLI users
+2. **Cloud deployment**: Docker container for HPC cluster integration
+3. **Additional formats**: phonopy, XDATCAR support
+4. **Statistical validation**: Automated hypothesis testing on smoothed vs. raw data
 
 ## 10. Conclusion
 

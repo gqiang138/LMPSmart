@@ -11,7 +11,7 @@ Parses 8 file formats, standardizes LAMMPS non-standard data into 8 original str
 - **3 outlier filters**: zscore, MAD, IQR
 - **Config-driven** (YAML): no hardcoding, all parameters in `configs/default.yaml`
 - **Glob batch matching**: process multiple files simultaneously with split naming
-- **Agent architecture**: natural language goal → LLM plan → tool chain (with keyword fallback)
+- **Agent architecture**: natural language goal → LLM-first plan → tool chain (falls back to keyword matching)
 - **Multi-provider LLM**: local Ollama / online OpenAI-compatible API, config-driven
 - **Execution logger**: full traceability (JSONL) for reproducibility
 
@@ -92,18 +92,23 @@ molecular_weight, find_elements, atom_type,
 detect_encoding, autocode
 ```
 
-### LLM Provider Config
+### LLM Agent (Fully Integrated)
+
+Agent 默认启用 LLM 推理（Ollama 本地或在线 API），关键词匹配作为降级备选。
 
 ```bash
-# Local Ollama (default)
+# Agent 默认调用 LLM（自动检测可用性）
+python -m lmpsmart agent --goal "平滑温度曲线，去除异常值"
+
+# 配置 Ollama 本地模型（默认）
 python -m lmpsmart llm setup --provider local --model qwen3:8b
 
-# Online API (OpenRouter, etc.)
+# 配置在线 API（OpenRouter 等 OpenAI 兼容接口）
 python -m lmpsmart llm setup --provider online \
     --base-url https://openrouter.ai/api/v1 \
     --api-key sk-or-xxxxx --model anthropic/claude-3-haiku
 
-# Fallback: keyword matching (no LLM required)
+# 强制使用关键词匹配（无 LLM 环境）
 python -m lmpsmart agent --goal "arrange log" --no-llm
 ```
 

@@ -322,7 +322,7 @@ addTitleBar(slide, "七、Agent 架构：自然语言 → 工具链");
 
 const flowSteps = [
   { x: 0.25, w: 1.9, label: "Natural Language\nGoal", bg: C.navy },
-  { x: 2.3, w: 2.1, label: "plan_from_goal()\n关键词/LLM\n规划工具链", bg: C.lightNavy },
+    { x: 2.3, w: 2.1, label: "plan_from_goal()\nLLM优先推理\n→ 关键词降级", bg: C.lightNavy },
   { x: 4.55, w: 2.4, label: "execute()\n18 tools in\nTOOL_REGISTRY", bg: C.teal },
   { x: 7.1, w: 2.0, label: "JSONL Logger\n完整追溯", bg: C.accent },
 ];
@@ -395,7 +395,7 @@ llmExamples.forEach((ex, i) => {
 
 // Future LLM integration note
 card(slide, 0.4, 5.08, 9.2, 0.45, { fill: C.gold, line: C.gold });
-slide.addText("未来方向：plan_from_goal() 关键词匹配 → LLM 推理（GPT-4o / Qwen3）", {
+slide.addText("✅ 已落地：Agent 架构内置 LLM 推理（Ollama qwen3:8b / gpt-4o），关键词匹配作降级兜底", {
   x: 0.5, y: 5.1, w: 9.0, h: 0.4, fontSize: 12, fontFace: fn.cn, color: C.navy, bold: true, valign: "middle", margin: 0,
 });
 
