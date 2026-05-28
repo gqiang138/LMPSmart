@@ -239,9 +239,9 @@ def read_bonds(
         ).fillna("")
     dfbonds = dfbonds.groupby(["frame", "id1", "id2"]).first().reset_index()
     if dfcutoff is not None and not dfcutoff.empty:
-        if dfcutoff.loc[0, "bonds"] == "":
-            dfbonds["bocutoff"] = dfcutoff.loc[0, "bocutoff"]
-            dfbonds["blcutoff"] = dfcutoff.loc[0, "blcutoff"]
+        if len(dfcutoff) == 1 and dfcutoff.iloc[0]["bonds"] == "":
+            dfbonds["bocutoff"] = dfcutoff.iloc[0]["bocutoff"]
+            dfbonds["blcutoff"] = dfcutoff.iloc[0]["blcutoff"]
             dfbonds.loc[dfbonds["id2"] == 0, "bocutoff"] = np.nan
             dfbonds.loc[dfbonds["id2"] == 0, "blcutoff"] = np.nan
         else:
@@ -302,46 +302,49 @@ def read_cell(
     encoding: str = "utf-8",
 ) -> pd.DataFrame:
     with open(dump_path, encoding=encoding) as f:
-        lines = f.read().splitlines()
-    pattern_step = re.compile(r"ITEM: TIMESTEP")
-    pattern_bounds = re.compile(r"ITEM: BOX BOUNDS")
-    frames, cell_data = [], []
+        dumplines = f.read().splitlines()
+    framelist, celllist = [], []
     i = 0
-    while i < len(lines):
-        if pattern_step.search(lines[i]):
-            try:
-                frame = int(lines[i + 1])
-                i += 2
-                if pattern_bounds.search(lines[i]):
-                    bounds_line = lines[i]
-                    i += 1
-                    lohi = []
-                    for _ in range(3):
-                        parts = lines[i].strip().split()
-                        lohi.append((float(parts[0]), float(parts[1])))
-                        i += 1
-                    lx = lohi[0][1] - lohi[0][0]
-                    ly = lohi[1][1] - lohi[1][0]
-                    lz = lohi[2][1] - lohi[2][0]
-                    volume = lx * ly * lz
-                    frames.append(
-                        {
-                            "frame": frame - int(ignored_time * 1000 / timestep),
-                            "Lx": lx,
-                            "Ly": ly,
-                            "Lz": lz,
-                            "Volume": volume,
-                        }
-                    )
-                else:
-                    i += 3
-            except (ValueError, IndexError):
-                i += 1
+    while i < len(dumplines):
+        if "ITEM: TIMESTEP" in dumplines[i]:
+            framelist.append(int(dumplines[i + 1].strip()))
+            i += 1
+        elif "ITEM: BOX BOUNDS" in dumplines[i]:
+            items = dumplines[i].split("ITEM: BOX BOUNDS")[1].split()
+            if len(items) == 3:
+                a = float(dumplines[i + 1].split()[1]) - float(dumplines[i + 1].split()[0])
+                b = float(dumplines[i + 2].split()[1]) - float(dumplines[i + 2].split()[0])
+                c = float(dumplines[i + 3].split()[1]) - float(dumplines[i + 3].split()[0])
+                a0 = float(dumplines[i + 1].split()[0])
+                b0 = float(dumplines[i + 2].split()[0])
+                c0 = float(dumplines[i + 3].split()[0])
+                xy = xz = yz = 0.0
+                px, py, pz = items[0], items[1], items[2]
+            elif len(items) == 6:
+                xy = float(dumplines[i + 1].split()[2])
+                xz = float(dumplines[i + 2].split()[2])
+                yz = float(dumplines[i + 3].split()[2])
+                a0 = float(dumplines[i + 1].split()[0]) - min(0.0, xy, xz, xy + xz)
+                b0 = float(dumplines[i + 2].split()[0]) - min(0.0, yz)
+                c0 = float(dumplines[i + 3].split()[0])
+                a = (float(dumplines[i + 1].split()[1]) - float(dumplines[i + 1].split()[0])
+                     - max(0.0, xy, xz, xy + xz) + min(0.0, xy, xz, xy + xz))
+                b = (float(dumplines[i + 2].split()[1]) - float(dumplines[i + 2].split()[0])
+                     - max(0.0, yz) + min(0.0, yz))
+                c = float(dumplines[i + 3].split()[1]) - float(dumplines[i + 3].split()[0])
+                px, py, pz = items[3], items[4], items[5]
+            else:
+                a = b = c = a0 = b0 = c0 = xy = xz = yz = 0.0
+                px = py = pz = ""
+            celllist.append([a, b, c, a0, b0, c0, xy, xz, yz, px, py, pz])
+            i += 4
         else:
             i += 1
-    dfcell = pd.DataFrame(frames)
+    dfcell = pd.DataFrame(celllist, columns=["a", "b", "c", "a0", "b0", "c0", "xy", "xz", "yz", "px", "py", "pz"])
+    dfcell.insert(0, "frame", framelist)
+    dfcell["frame"] = dfcell["frame"].astype(int) - int(ignored_time * 1000 / timestep)
     dfcell["frame"] = dfcell["frame"].astype(int)
-    dfcell.insert(1, "time", round(dfcell["frame"] * timestep * 0.001, 3))
+    dfcell = dfcell.sort_values("frame", ascending=True).reset_index(drop=True)
     return dfcell
 
 
@@ -658,6 +661,9 @@ def arrange(
 
         elif mode == "Cell":
             cell_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.cellfilename)))
+            if not cell_files:
+                dump_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.dumpfilename)))
+                cell_files = dump_files
             if cell_files:
                 results["cell"] = read_cell(
                     cell_files[0], ignored_time=ignored_time, timestep=timestep, encoding=encoding,
