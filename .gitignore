@@ -11,3 +11,6 @@ venv/
 .DS_Store
 *.swp
 *.swo
+docs/node_modules/
+docs/package.json
+docs/package-lock.json
