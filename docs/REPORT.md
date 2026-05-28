@@ -173,6 +173,8 @@ The execution logger enables complete reproducibility:
 
 ## 9. Limitations and Future Work
 
+**Configurable and extensible**: All behavior is driven by `configs/default.yaml` — 30 bond types, thresholds, glob patterns, plot parameters, timestep settings. Users can customize or extend any parameter without touching code.
+
 **Current status**: LLM inference is fully integrated — `plan_from_goal()` tries Ollama or OpenAI-compatible API first, falls back to keyword matching if LLM is unavailable. Config via `llm setup` (local Ollama or online API).
 
 **Current limitations**: The nine smoothing algorithms cover most MD time-series use cases but some physics-informed constraints are simplified.
