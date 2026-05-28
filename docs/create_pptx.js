@@ -803,7 +803,7 @@ const comps = [
     color: ["778DA9", "778DA9", "778DA9", DEEP_BLUE],
   },
   {
-    dim: "数据降噪（9种平滑）",
+    dim: "数据降噪+曲线拟合\n（9平滑+polyfit.n/lowess等）",
     vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
     color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
   },
@@ -869,7 +869,7 @@ slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
   rectRadius: 0.06,
 });
 slide.addText([
-  { text: "lmpsmart = 数据标准化（8大原创输出） + 降噪（9平滑） + 过滤（3种） + Agent + JSONL日志", options: { color: TEXT_LIGHT, fontSize: 11 } },
+  { text: "lmpsmart = 数据标准化（8大原创输出） + 降噪+拟合（9平滑+polyfit.n/lowess等） + 过滤（3种） + Agent + JSONL日志", options: { color: TEXT_LIGHT, fontSize: 10 } },
   { text: "  |  OVITO/mdapy/MDAnalysis 专注派生物理量（RDF/MSD），lmpsmart 定位为互补前置清洗层", options: { color: "778DA9", fontSize: 9 } },
 ], {
   x: 0.4, y: 5.5, w: 9.2, h: 0.55,

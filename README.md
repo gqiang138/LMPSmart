@@ -7,7 +7,7 @@ Parses 8 file formats, standardizes LAMMPS non-standard data into 8 original str
 
 - **8 file parsers**: Log, Bonds, Dump, Cell, Species, POS, OVITO, General
 - **8 original standardized outputs**: Bonds (bocutoff/blcutoff thresholds), Cell (Lx/Ly/Lz/Volume from Dump), Atom (id→element mapping), Species/POS (molecular weight), OVITO multi-frame integration
-- **9 smoothing algorithms**: segment_spline, adaptive_kalman, physics_constrained, robust_lowess, dynamic_wavelet, moving_avg, savgol, wavelet, ewma
+- **9 smoothing algorithms + curve fitting**: segment_spline, adaptive_kalman, physics_constrained, robust_lowess, dynamic_wavelet, moving_avg, savgol, wavelet, ewma; polyfit.n polynomial fitting; LOWESS local regression
 - **3 outlier filters**: zscore, MAD, IQR
 - **Config-driven** (YAML): no hardcoding, all parameters in `configs/default.yaml`
 - **Glob batch matching**: process multiple files simultaneously with split naming
@@ -50,7 +50,7 @@ Input files (LAMMPS)
        ↓
    DataFrame
        ↓
-  Mapping Layer       ← 9 smoothers + 3 filters + metrics (RMSD/CED/mweight)
+  Mapping Layer       ← 9 smoothers + curve fitting + 3 filters + metrics (RMSD/CED/mweight)
        ↓
    Output files
        ↑
