@@ -788,12 +788,12 @@ tools.forEach((t, i) => {
 // Comparison table
 const comps = [
   {
-    dim: "派生物理量计算\n（RDF/MSD等）",
+    dim: "派生物理量计算\n（RDF/RMSD/CED等）",
     vals: ["OVITO ✓✓", "mdapy ✓", "MDAnalysis ✓", "lmpsmart ✓内置+可扩展"],
     color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
-    dim: "自定义指标扩展\n（mweight/rmsd等）",
+    dim: "自定义指标扩展\n（mweight等）",
     vals: ["OVITO ~(Pro)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
     color: ["778DA9", "778DA9", "778DA9", DEEP_BLUE],
   },
@@ -864,7 +864,7 @@ slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
   rectRadius: 0.06,
 });
 slide.addText([
-  { text: "lmpsmart = 数据降噪（9平滑） + 异常值过滤（3种） + 指标计算（内置+可扩展） + Agent + JSONL日志", options: { color: TEXT_LIGHT, fontSize: 11 } },
+  { text: "lmpsmart = 数据降噪（9平滑） + 异常值过滤（3种） + 指标计算（RMSD/CED/mweight等+可扩展） + Agent + JSONL日志", options: { color: TEXT_LIGHT, fontSize: 11 } },
   { text: "  |  OVITO/mdapy/MDAnalysis 专注派生物理量（RDF/MSD），lmpsmart 定位为互补前置清洗层", options: { color: "778DA9", fontSize: 9 } },
 ], {
   x: 0.4, y: 5.5, w: 9.2, h: 0.55,

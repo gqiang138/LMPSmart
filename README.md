@@ -1,7 +1,7 @@
 # lmpsmart — LAMMPS Data Agent
 
 LAMMPS molecular dynamics simulation data processing tool with autonomous Agent architecture.
-Parses 8 file formats, smooths time-series signals, filters outliers, and computes custom metrics — all driven by YAML config.
+Parses 8 file formats, smooths time-series signals, filters outliers, and computes metrics (RMSD, CED, mweight, and custom) — all driven by YAML config.
 
 ## Features
 
