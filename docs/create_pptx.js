@@ -808,9 +808,9 @@ const comps = [
     color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
-    dim: "专业绘图（YAML配置）",
-    vals: ["OVITO ✓", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
-    color: ["3D405B", "778DA9", "778DA9", DEEP_BLUE],
+    dim: "专业曲线绘图（出版级）",
+    vals: ["OVITO ✗(仅3D模型)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
+    color: ["E07A5F", "778DA9", "778DA9", DEEP_BLUE],
   },
   {
     dim: "自然语言命令",
