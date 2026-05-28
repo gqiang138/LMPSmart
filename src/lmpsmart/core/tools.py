@@ -57,7 +57,11 @@ def find_elements(input_string: str) -> list[str]:
 
 
 def molecular_weight(formula: str) -> float:
-    formula = formula.translate(str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789"))
+    table = str.maketrans(
+        "₀₁₂₃₄₅₆₇₈₉²³⁰⁴⁵⁶⁷⁸⁹",
+        "0123456789223456789",
+    )
+    formula = formula.translate(table)
     elements = re.findall(r"([A-Z][a-z]?)(\d*)", formula)
     total = 0.0
     for element, count in elements:

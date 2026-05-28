@@ -402,6 +402,10 @@ def read_species(
     df["frame"] = df["frame"].astype(int)
     df = df.sort_values(["frame", "molecule"], ascending=[True, True]).reset_index(drop=True)
     df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
+    # Original format: number (count per molecule), weight (molecular weight)
+    df = df.rename(columns={"count": "number"})
+    from lmpsmart.core.tools import molecular_weight
+    df["weight"] = df["molecule"].apply(molecular_weight)
     return df
 
 
@@ -435,13 +439,15 @@ def read_pos(
                 if len(parts) >= 7:
                     try:
                         mol_id = int(parts[0])
+                        atom_count = int(parts[1])
                         mol_type = parts[2].strip()
-                        cx = float(parts[5]) if parts[4] == "CoM_x" else float(parts[4])
-                        cy = float(parts[6]) if parts[5] == "CoM_y" else float(parts[5])
-                        cz = float(parts[7]) if parts[6] == "CoM_z" else float(parts[6])
+                        q = float(parts[3])
+                        cx = float(parts[4])
+                        cy = float(parts[5])
+                        cz = float(parts[6])
                         if current_frame is not None:
                             frames_data[current_frame].append(
-                                {"x": cx, "y": cy, "z": cz, "molecule": mol_type}
+                                {"x": cx, "y": cy, "z": cz, "molecule": mol_type, "q": q, "atom_count": atom_count}
                             )
                     except (ValueError, IndexError):
                         continue
@@ -468,6 +474,8 @@ def read_pos(
                     "y": float(parts[2]),
                     "z": float(parts[3]),
                     "molecule": parts[4] if len(parts) > 4 else "X",
+                    "q": 0.0,
+                    "atom_count": 0,
                 }
             )
     rows = []
@@ -480,12 +488,18 @@ def read_pos(
                     "y": atom["y"],
                     "z": atom["z"],
                     "molecule": atom.get("molecule", "X"),
+                    "q": atom.get("q", 0.0),
+                    "atom_count": atom.get("atom_count", 0),
                 }
             )
     dfpos = pd.DataFrame(rows)
     dfpos["frame"] = dfpos["frame"].astype(int)
     dfpos.insert(1, "time", round(dfpos["frame"] * timestep * 0.001, 3))
-    return dfpos
+    dfpos = dfpos.sort_values(["frame", "molecule"], ascending=[True, True]).reset_index(drop=True)
+    from lmpsmart.core.tools import molecular_weight
+    dfpos["weight"] = dfpos["molecule"].apply(molecular_weight)
+    cols = ["frame", "time", "molecule", "q", "x", "y", "z", "weight"]
+    return dfpos[cols]
 
 
 def read_ovito(
