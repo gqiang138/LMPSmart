@@ -50,7 +50,7 @@ python -m lmpsmart config --show
 
 ```bash
 # Configure later — keyword fallback works without any LLM
-python -m lmpsmart llm setup --provider local --model qwen3:8b
+python -m lmpsmart llm setup --provider local --model qwen3.5-9b
 ```
 
 ### Dependencies
@@ -174,7 +174,7 @@ python -m lmpsmart llm list
 python -m lmpsmart llm test
 
 # Setup local Ollama (default)
-python -m lmpsmart llm setup --provider local --base-url http://localhost:11434 --model qwen3:8b
+python -m lmpsmart llm setup --provider local --base-url http://localhost:11434 --model qwen3.5-9b
 
 # Setup online API (OpenRouter, OpenAI, etc.)
 python -m lmpsmart llm setup --provider online \
@@ -189,12 +189,12 @@ Config file: `configs/llm.yaml`
 provider: local           # local | online
 base_url: http://localhost:11434
 api_key: ""              # required for online provider
-default_model: qwen3:8b
+default_model: qwen3.5-9b
 timeout: 120
 task_models:             # optional per-task model override
-  plan: qwen3:8b         # task decomposition
-  chat: qwen3:8b         # conversation mode
-  coding: qwen3:8b       # code generation
+  plan: qwen3.5-9b         # task decomposition
+  chat: qwen3.5-9b         # conversation mode
+  coding: qwen3.5-9b       # code generation
 ```
 
 When Ollama is unavailable, Agent falls back to keyword matching automatically.

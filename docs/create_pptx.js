@@ -395,7 +395,7 @@ llmExamples.forEach((ex, i) => {
 
 // Future LLM integration note
 card(slide, 0.4, 5.08, 9.2, 0.45, { fill: C.gold, line: C.gold });
-slide.addText("✅ 已落地：Agent 架构内置 LLM 推理（Ollama qwen3:8b / gpt-4o），关键词匹配作降级兜底", {
+slide.addText("✅ 已落地：Agent 架构内置 LLM 推理（Ollama qwen3.5-9b / gpt-4o），关键词匹配作降级兜底", {
   x: 0.5, y: 5.1, w: 9.0, h: 0.4, fontSize: 12, fontFace: fn.cn, color: C.navy, bold: true, valign: "middle", margin: 0,
 });
 

@@ -101,7 +101,7 @@ Agent 默认启用 LLM 推理（Ollama 本地或在线 API），关键词匹配�
 python -m lmpsmart agent --goal "平滑温度曲线，去除异常值"
 
 # 配置 Ollama 本地模型（默认）
-python -m lmpsmart llm setup --provider local --model qwen3:8b
+python -m lmpsmart llm setup --provider local --model qwen3.5-9b
 
 # 配置在线 API（OpenRouter 等 OpenAI 兼容接口）
 python -m lmpsmart llm setup --provider online \

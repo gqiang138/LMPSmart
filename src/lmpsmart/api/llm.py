@@ -16,10 +16,11 @@ except ImportError:
 
 PROVIDER_LOCAL = "local"
 PROVIDER_ONLINE = "online"
-AVAILABLE_LOCAL_MODELS = [
-    "qwen3-vl:8b",
-    "qwen3:8b",
-    "qwen3:14b",
+    AVAILABLE_LOCAL_MODELS = [
+        "qwen3-vl:8b",
+        "qwen3:8b",
+        "qwen3.5-9b",
+        "qwen3:14b",
     "deepseek-r1:8b",
     "deepseek-r1:14b",
     "okamototk/deepseek-r1:8b",
@@ -34,9 +35,9 @@ DEFAULT_CONFIG = {
     "provider": PROVIDER_LOCAL,
     "base_url": "http://localhost:11434",
     "api_key": "",
-    "default_model": "qwen3:8b",
+    "default_model": "qwen3.5-9b",
     "timeout": 120,
-    "task_models": {"plan": "qwen3:8b", "chat": "qwen3:8b", "coding": "qwen3:8b"},
+    "task_models": {"plan": "qwen3.5-9b", "chat": "qwen3.5-9b", "coding": "qwen3.5-9b"},
 }
 
 

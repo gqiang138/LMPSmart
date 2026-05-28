@@ -185,7 +185,7 @@ def offer_llm_config():
     print("  LLM Configuration (optional)")
     print("=" * 50)
     print("  You can configure LLM later with:")
-    print("    python -m lmpsmart llm setup --provider local --model qwen3:8b")
+    print("    python -m lmpsmart llm setup --provider local --model qwen3.5-9b")
     print("  Or skip for now — keyword fallback is always available.")
     print()
     while True:
@@ -200,7 +200,7 @@ def offer_llm_config():
             while True:
                 p = input("  Choice [1]: ").strip()
                 if p in ("", "1"):
-                    prov, base_url, model = "local", "http://localhost:11434", "qwen3:8b"
+                    prov, base_url, model = "local", "http://localhost:11434", "qwen3.5-9b"
                     break
                 if p == "2":
                     base_url = input("    Base URL [https://openrouter.ai/api/v1]: ").strip()
