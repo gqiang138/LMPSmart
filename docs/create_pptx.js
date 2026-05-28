@@ -62,6 +62,182 @@ slide.addShape(pptx.shapes.RECTANGLE, {
 });
 
 // ==============================================================
+// Slide 1.5: Molecular Dynamics Method
+// ==============================================================
+slide = pptx.addSlide();
+slide.background = { color: DARK_BG };
+
+slide.addText("分子动力学方法", {
+  x: 0.5, y: 0.3, w: 9, h: 0.7,
+  fontSize: 36, bold: true, color: TEXT_LIGHT, fontFace: "Georgia",
+  margin: 0,
+});
+
+// Left: what is MD
+slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+  x: 0.4, y: 1.15, w: 4.5, h: 2.6,
+  fill: { color: DEEP_BLUE, transparency: 30 },
+  line: { color: DEEP_BLUE, width: 1 },
+  rectRadius: 0.08,
+});
+slide.addText("什么是分子动力学？", {
+  x: 0.5, y: 1.2, w: 4.3, h: 0.45,
+  fontSize: 16, bold: true, color: ACCENT,
+});
+const mdDefs = [
+  "依据牛顿运动定律模拟分子体系运动",
+  "获得体系在相空间的时间演化轨迹",
+  "抽取样本，计算宏观热力学和力学性质",
+  "力场精度直接影响模拟结果质量",
+];
+mdDefs.forEach((d, i) => {
+  slide.addText("▸ " + d, {
+    x: 0.6, y: 1.7 + i * 0.45, w: 4.1, h: 0.42,
+    fontSize: 12, color: TEXT_LIGHT,
+  });
+});
+
+// Right: applications
+slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+  x: 5.1, y: 1.15, w: 4.5, h: 2.6,
+  fill: { color: TEAL, transparency: 30 },
+  line: { color: TEAL, width: 1 },
+  rectRadius: 0.08,
+});
+slide.addText("含能材料研究应用", {
+  x: 5.2, y: 1.2, w: 4.3, h: 0.45,
+  fontSize: 16, bold: true, color: ACCENT,
+});
+const mdApps = [
+  "晶体形貌预测 & 力学性能分析",
+  "冲击响应：撞击损伤、热点演化",
+  "热分解：脱硝基反应机理",
+  "相变研究：γ→ξ相等晶型转变",
+];
+mdApps.forEach((a, i) => {
+  slide.addText("▸ " + a, {
+    x: 5.3, y: 1.7 + i * 0.45, w: 4.1, h: 0.42,
+    fontSize: 12, color: TEXT_LIGHT,
+  });
+});
+
+// Bottom: scale note
+slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+  x: 0.4, y: 3.9, w: 9.2, h: 1.5,
+  fill: { color: MIDNIGHT },
+  rectRadius: 0.08,
+});
+slide.addText("分子动力学模拟尺度", {
+  x: 0.6, y: 3.95, w: 8.8, h: 0.4,
+  fontSize: 14, bold: true, color: ACCENT,
+});
+const scaleItems = [
+  { label: "空间范围", value: "1nm ~ 100nm" },
+  { label: "时间范围", value: "1ps ~ 10ns" },
+  { label: "典型规模", value: "百万原子并行计算" },
+  { label: "势函数", value: "ReaxFF-lg（反应力场，含能材料专用）" },
+];
+scaleItems.forEach((s, i) => {
+  const col = i % 2;
+  const row = Math.floor(i / 2);
+  slide.addText(s.label + "：" + s.value, {
+    x: 0.6 + col * 4.5, y: 4.4 + row * 0.45, w: 4.3, h: 0.4,
+    fontSize: 12, color: TEXT_LIGHT,
+  });
+});
+
+// ==============================================================
+// Slide 1.6: LAMMPS + Data Format Challenges
+// ==============================================================
+slide = pptx.addSlide();
+slide.background = { color: LIGHT_BG };
+
+slide.addText("LAMMPS：强大但数据处理面临挑战", {
+  x: 0.5, y: 0.25, w: 9, h: 0.65,
+  fontSize: 32, bold: true, color: TEXT_DARK, fontFace: "Georgia",
+  margin: 0,
+});
+
+// Left: LAMMPS features
+slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+  x: 0.4, y: 1.0, w: 4.5, h: 2.4,
+  fill: { color: CARD_BG },
+  line: { color: DEEP_BLUE, width: 1.5 },
+  rectRadius: 0.08,
+});
+slide.addText("LAMMPS 核心特点", {
+  x: 0.5, y: 1.05, w: 4.3, h: 0.4,
+  fontSize: 15, bold: true, color: DEEP_BLUE,
+});
+const lmpPros = [
+  "✓ 开源免费，代码可自行修改",
+  "✓ 支持百万原子级并行计算",
+  "✓ 支持 ReaxFF 反应力场",
+  "✓ 含能材料领域广泛验证",
+];
+lmpPros.forEach((p, i) => {
+  slide.addText(p, {
+    x: 0.6, y: 1.5 + i * 0.45, w: 4.1, h: 0.42,
+    fontSize: 12, color: TEXT_DARK,
+  });
+});
+
+// Right: LAMMPS limitations (important for the problem)
+slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+  x: 5.1, y: 1.0, w: 4.5, h: 2.4,
+  fill: { color: CARD_BG },
+  line: { color: "E07A5F", width: 1.5 },
+  rectRadius: 0.08,
+});
+slide.addText("LAMMPS 自身局限", {
+  x: 5.2, y: 1.05, w: 4.3, h: 0.4,
+  fontSize: 15, bold: true, color: "E07A5F",
+});
+const lmpCons = [
+  "✗ 无图形用户界面（GUI）",
+  "✗ 无分子建模工具",
+  "✗ 无复杂数据分析/可视化",
+  "✗ 数据输出为非标准格式",
+];
+lmpCons.forEach((c, i) => {
+  slide.addText(c, {
+    x: 5.3, y: 1.5 + i * 0.45, w: 4.1, h: 0.42,
+    fontSize: 12, color: TEXT_DARK,
+  });
+});
+
+// LAMMPS output file formats - main section
+slide.addText("LAMMPS 输出文件格式", {
+  x: 0.4, y: 3.5, w: 9.2, h: 0.4,
+  fontSize: 16, bold: true, color: TEXT_DARK,
+});
+
+const formats = [
+  { name: "log", desc: "热力学数据\n温度/压力/能量\n晶胞参数", color: DEEP_BLUE },
+  { name: "dump", desc: "原子轨迹\nxyz坐标/速度\n数千帧", color: TEAL },
+  { name: "bonds", desc: "键级分析\n30种键类型\nReaxFF专用", color: ACCENT },
+  { name: "species", desc: "物种计数\n键级阈值依赖\n动态变化", color: MIDNIGHT },
+  { name: "pos", desc: "晶胞结构\n晶格常数\n体积密度", color: "F4A261" },
+];
+formats.forEach((f, i) => {
+  const x = 0.4 + i * 1.88;
+  slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+    x, y: 3.95, w: 1.78, h: 1.35,
+    fill: { color: f.color, transparency: 20 },
+    line: { color: f.color, width: 1.5 },
+    rectRadius: 0.06,
+  });
+  slide.addText(f.name.toUpperCase(), {
+    x, y: 3.98, w: 1.78, h: 0.35,
+    fontSize: 13, bold: true, color: f.color, align: "center",
+  });
+  slide.addText(f.desc, {
+    x: x + 0.05, y: 4.35, w: 1.68, h: 0.92,
+    fontSize: 9, color: TEXT_DARK, align: "center",
+  });
+});
+
+// ==============================================================
 // Slide 2: Background & Problem
 // ==============================================================
 slide = pptx.addSlide();
@@ -762,104 +938,111 @@ slide.addText("lmpsmart vs 主流 LAMMPS 数据处理工具", {
   margin: 0,
 });
 
-// Tool badges at top
+// Tool badges at top (5 tools)
 const tools = [
   { name: "OVITO", desc: "可视化+分析 · GUI主导", color: "E07A5F" },
-  { name: "mdapy", desc: "快速Python分析 · C++加速", color: "3D405B" },
+  { name: "VMD", desc: "轨迹可视化 · Tcl脚本扩展", color: "6A5ACD" },
+  { name: "mdapy", desc: "快速Python · C++加速", color: "3D405B" },
   { name: "MDAnalysis", desc: "轨迹分析 · 学术最流行", color: "5F9EA0" },
   { name: "lmpsmart", desc: "Agent架构 · 全链路可追溯", color: DEEP_BLUE },
 ];
 tools.forEach((t, i) => {
+  const badgeW = 1.78;
+  const badgeX = 0.3 + i * (badgeW + 0.15);
   slide.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
-    x: 0.3 + i * 2.45, y: 1.0, w: 2.3, h: 0.5,
+    x: badgeX, y: 1.0, w: badgeW, h: 0.5,
     fill: { color: t.color },
     rectRadius: 0.05,
   });
   slide.addText(t.name, {
-    x: 0.3 + i * 2.45, y: 1.0, w: 2.3, h: 0.3,
+    x: badgeX, y: 1.0, w: badgeW, h: 0.3,
     fontSize: 13, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle",
   });
   slide.addText(t.desc, {
-    x: 0.3 + i * 2.45, y: 1.28, w: 2.3, h: 0.22,
+    x: badgeX, y: 1.28, w: badgeW, h: 0.22,
     fontSize: 8, color: TEXT_LIGHT, align: "center",
   });
 });
 
-// Comparison table
+// Comparison table (5 tools: OVITO, VMD, mdapy, MDAnalysis, lmpsmart)
 const comps = [
   {
     dim: "派生物理量计算\n（RDF/RMSD/CED等）",
-    vals: ["OVITO ✓✓", "mdapy ✓", "MDAnalysis ✓", "lmpsmart ✓内置+可扩展"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✓✓", "VMD ✓✓", "mdapy ✓", "MDAnalysis ✓", "lmpsmart ✓内置+可扩展"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "数据标准化·原创输出\n（Bonds阈值/Cell/Atom/mweight等）",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "自定义指标扩展",
-    vals: ["OVITO ~(Pro)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
-    color: ["778DA9", "778DA9", "778DA9", DEEP_BLUE],
+    vals: ["OVITO ~(Pro)", "VMD ~(Tcl)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
+    color: ["778DA9", "778DA9", "778DA9", "778DA9", DEEP_BLUE],
   },
   {
     dim: "数据降噪+曲线拟合\n（9平滑+polyfit.n/lowess等）",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "统计异常值过滤\n（zscore/MAD/IQR）",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "专业曲线绘图（出版级）",
-    vals: ["OVITO ✗(仅3D模型)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
-    color: ["E07A5F", "778DA9", "778DA9", DEEP_BLUE],
+    vals: ["OVITO ✗(仅3D)", "VMD ✗(仅3D)", "mdapy ~", "MDAnalysis ~", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "778DA9", "778DA9", DEEP_BLUE],
   },
   {
     dim: "自然语言命令",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "Agent 规划",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "JSONL 执行日志",
-    vals: ["OVITO ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "3D405B", "5F9EA0", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ✗", "mdapy ✗", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", DEEP_BLUE],
   },
   {
     dim: "批量 Glob 匹配",
-    vals: ["OVITO ✗", "mdapy ~", "MDAnalysis ✗", "lmpsmart ✓"],
-    color: ["E07A5F", "778DA9", "E07A5F", DEEP_BLUE],
+    vals: ["OVITO ✗", "VMD ~", "mdapy ~", "MDAnalysis ✗", "lmpsmart ✓"],
+    color: ["E07A5F", "778DA9", "778DA9", "E07A5F", DEEP_BLUE],
   },
 ];
 
-// Table header
+// Table header (5 columns)
+const colW = 1.48;
+const labelW = 2.0;
+const colX = [0.3 + labelW]; // col 1 start
+for (let ci = 0; ci < 4; ci++) colX.push(colX[ci] + colW);
 slide.addShape(pptx.shapes.RECTANGLE, {
   x: 0.3, y: 1.65, w: 9.4, h: 0.45,
   fill: { color: DEEP_BLUE },
 });
-slide.addText("对比维度", { x: 0.3, y: 1.65, w: 2.2, h: 0.45, fontSize: 12, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle" });
-slide.addText("OVITO", { x: 2.5, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "E07A5F", align: "center", valign: "middle" });
-slide.addText("mdapy", { x: 4.3, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "3D405B", align: "center", valign: "middle" });
-slide.addText("MDAnalysis", { x: 6.1, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: "5F9EA0", align: "center", valign: "middle" });
-slide.addText("lmpsmart", { x: 7.9, y: 1.65, w: 1.8, h: 0.45, fontSize: 12, bold: true, color: ACCENT, align: "center", valign: "middle" });
+slide.addText("对比维度", { x: 0.3, y: 1.65, w: labelW, h: 0.45, fontSize: 11, bold: true, color: TEXT_LIGHT, align: "center", valign: "middle" });
+const toolHeaders = ["OVITO", "VMD", "mdapy", "MDAnalysis", "lmpsmart"];
+const toolHeaderColors = ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", ACCENT];
+toolHeaders.forEach((h, i) => {
+  slide.addText(h, { x: colX[i], y: 1.65, w: colW, h: 0.45, fontSize: 11, bold: true, color: toolHeaderColors[i], align: "center", valign: "middle" });
+});
 
 const rowH = 0.33;
 comps.forEach((c, i) => {
   const y = 2.15 + i * rowH;
   const rowBg = i % 2 === 0 ? CARD_BG : LIGHT_BG;
   slide.addShape(pptx.shapes.RECTANGLE, { x: 0.3, y, w: 9.4, h: rowH, fill: { color: rowBg } });
-  slide.addText(c.dim, { x: 0.35, y, w: 2.1, h: rowH, fontSize: 9, bold: true, color: TEXT_DARK, valign: "middle" });
-  slide.addText(c.vals[0], { x: 2.5, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[0], align: "center", valign: "middle" });
-  slide.addText(c.vals[1], { x: 4.3, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[1], align: "center", valign: "middle" });
-  slide.addText(c.vals[2], { x: 6.1, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[2], align: "center", valign: "middle" });
-  slide.addText(c.vals[3], { x: 7.9, y, w: 1.8, h: rowH, fontSize: 9, color: c.color[3], bold: true, align: "center", valign: "middle" });
+  slide.addText(c.dim, { x: 0.35, y, w: labelW - 0.05, h: rowH, fontSize: 9, bold: true, color: TEXT_DARK, valign: "middle" });
+  for (let ci = 0; ci < 5; ci++) {
+    slide.addText(c.vals[ci], { x: colX[ci], y, w: colW, h: rowH, fontSize: 9, color: c.color[ci], bold: ci === 4, align: "center", valign: "middle" });
+  }
 });
 
 // Bottom insight
