@@ -4,7 +4,7 @@ const fs = require("fs");
 const pptx = new pptxgen();
 pptx.layout = "LAYOUT_16x9";
 pptx.author = "Qiang Gan";
-pptx.title = "lmpsmart v1.0.0 - LAMMPS MD Data Processing Agent";
+pptx.title = "LMPSmart v1.0.0 - LAMMPS MD Smart Data Processing Agent";
 pptx.subject = "Agent Competition Submission";
 
 // SmartOffice Academic Theme (Theme 5-Key Contract)
@@ -62,11 +62,11 @@ let slide = pptx.addSlide();
 slide.background = { color: C.navy };
 slide.addShape(pptx.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.08, fill: { color: C.gold } });
 
-slide.addText("lmpsmart", {
+slide.addText("LMPSmart", {
   x: 0.5, y: 1.5, w: 9, h: 1.1, fontSize: 72, bold: true, color: C.accent, fontFace: fn.title, align: "center",
 });
 slide.addShape(pptx.shapes.RECTANGLE, { x: 3.5, y: 2.7, w: 3, h: 0.05, fill: { color: C.gold } });
-slide.addText("LAMMPS Molecular Dynamics Data Processing Agent", {
+slide.addText("LAMMPS Molecular Dynamics Smart Data Processing Agent", {
   x: 0.5, y: 2.85, w: 9, h: 0.55, fontSize: 22, color: C.warmWhite, fontFace: fn.cn, align: "center",
 });
 slide.addText("Agent 架构 · 标准化输出 · 全链路可追溯", {
@@ -103,12 +103,12 @@ mdDefs.forEach((d, i) => {
 
 // Right card
 card(slide, 5.1, 0.85, 4.5, 2.35, { fill: C.cardBg, line: C.teal, lineWidth: 2 });
-slide.addText("含能材料研究应用", { x: 5.2, y: 0.9, w: 4.3, h: 0.38, fontSize: 15, fontFace: fn.cn, color: C.teal, bold: true, margin: 0 });
+slide.addText("材料性质研究应用", { x: 5.2, y: 0.9, w: 4.3, h: 0.38, fontSize: 15, fontFace: fn.cn, color: C.teal, bold: true, margin: 0 });
 const mdApps = [
   "晶体形貌预测 & 力学性能分析",
   "冲击响应：撞击损伤、热点演化",
   "热分解：脱硝基反应机理",
-  "相变研究：γ→ξ相等晶型转变",
+  "相变研究：γ→ξ 等晶型转变",
 ];
 mdApps.forEach((a, i) => {
   slide.addText("▸ " + a, { x: 5.3, y: 1.35 + i * 0.44, w: 4.1, h: 0.4, fontSize: 12, fontFace: fn.cn, color: C.darkText, margin: 0 });
@@ -127,6 +127,9 @@ scales.forEach((s, i) => {
   const col = i % 2;
   const row = Math.floor(i / 2);
   slide.addText(s.label + "：" + s.value, { x: 0.6 + col * 4.5, y: 3.88 + row * 0.42, w: 4.3, h: 0.38, fontSize: 12, fontFace: fn.cn, color: C.warmWhite, margin: 0 });
+});
+slide.addText("应用领域：含能材料 · 金属材料 · 高分子聚合物 · 纳米材料", {
+  x: 0.6, y: 5.02, w: 8.8, h: 0.28, fontSize: 10, fontFace: fn.cn, color: C.accent, margin: 0,
 });
 
 // ==============================================================
@@ -154,7 +157,7 @@ lmpCons.forEach((c, i) => {
 });
 
 // File format section
-slide.addText("LAMMPS 输出文件格式", { x: 0.4, y: 3.2, w: 9.2, h: 0.38, fontSize: 16, fontFace: fn.cn, color: C.navy, bold: true, margin: 0 });
+slide.addText("LAMMPS 输出典型文件格式", { x: 0.4, y: 3.2, w: 9.2, h: 0.38, fontSize: 16, fontFace: fn.cn, color: C.navy, bold: true, margin: 0 });
 const formats = [
   { name: "log", desc: "热力学数据\n温度/压力/能量\n晶胞参数", color: C.navy },
   { name: "dump", desc: "原子轨迹\nxyz坐标/速度\n数千帧", color: C.teal },
@@ -444,7 +447,7 @@ cfgFeatures.forEach((f, i) => {
 
 // Validation note
 card(slide, 0.4, 4.85, 9.2, 0.55, { fill: C.accent, line: C.accent });
-slide.addText("Pydantic 模型在加载时验证 YAML — 运行时零错误", {
+slide.addText("Pydantic 模型在加载时验证 YAML — 运行时零错误  |  yaml参数可自定义", {
   x: 0.5, y: 4.88, w: 9.0, h: 0.5, fontSize: 13, fontFace: fn.cn, color: C.navy, bold: true, valign: "middle", margin: 0,
 });
 
@@ -481,7 +484,7 @@ outputFiles.forEach((o, i) => {
 // Benefits
 card(slide, 1.5, 3.85, 7.0, 1.35, { fill: C.navy });
 slide.addText("核心优势", { x: 1.7, y: 3.9, w: 6.6, h: 0.35, fontSize: 13, fontFace: fn.cn, color: C.gold, bold: true, margin: 0 });
-slide.addText("✓ 自动检测文件数量     ✓ 自动 split 编号     ✓ 零配置批量处理", {
+slide.addText("✓ 自动匹配文件类型     ✓ 自动识别拆分大文件     ✓ 零配置批量处理", {
   x: 1.7, y: 4.28, w: 6.6, h: 0.75, fontSize: 14, fontFace: fn.cn, color: C.warmWhite, margin: 0,
 });
 
@@ -600,8 +603,8 @@ const colX = [0.3 + labelW];
 for (let ci = 0; ci < 4; ci++) colX.push(colX[ci] + colW);
 
 slide.addShape(pptx.shapes.RECTANGLE, { x: 0.3, y: 0.88, w: 9.4, h: 0.47, fill: { color: C.navy } });
-const toolLabels = ["OVITO\n可视化+分析", "VMD\n轨迹+Tcl", "mdapy\nC++加速", "MDAnalysis\n学术流行", "lmpsmart\nAgent可追溯"];
-const toolHeaderColors = ["E07A5F", "6A5ACD", "3D405B", "5F9EA0", C.accent];
+const toolLabels = ["OVITO\n可视化+分析", "VMD\n轨迹+Tcl", "mdapy\nC++加速", "MDAnalysis\n学术流行", "LMPSmart\nAgent可追溯"];
+const toolHeaderColors = ["E07A5F", "6A5ACD", C.warmWhite, "5F9EA0", C.accent];
 slide.addText("对比维度", { x: 0.3, y: 0.88, w: labelW, h: 0.47, fontSize: 11, fontFace: fn.cn, color: C.warmWhite, bold: true, align: "center", valign: "middle" });
 toolLabels.forEach((h, i) => {
   slide.addText(h, { x: colX[i], y: 0.88, w: colW, h: 0.47, fontSize: 10, fontFace: fn.cn, color: toolHeaderColors[i], bold: true, align: "center", valign: "middle" });
@@ -664,7 +667,7 @@ futures.forEach((f, i) => {
 
 // Footer
 card(slide, 0, 4.6, 10, 1.0, { fill: C.lightNavy });
-slide.addText("github.com/qgan2025/lmpsmart  ·  GPL-3.0  ·  Copyright (c) 2025 Qiang Gan", {
+slide.addText("github.com/qgan2025/LMPSmart  ·  GPL-3.0  ·  Copyright (c) 2025 Qiang Gan", {
   x: 0, y: 4.7, w: 10, h: 0.38, fontSize: 13, fontFace: fn.cn, color: C.warmWhite, align: "center", margin: 0,
 });
 slide.addText("LAMMPS Molecular Dynamics Data Processing Agent  ·  v1.0.0", {
