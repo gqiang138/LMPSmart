@@ -1,11 +1,12 @@
 # lmpsmart — LAMMPS Data Agent
 
 LAMMPS molecular dynamics simulation data processing tool with autonomous Agent architecture.
-Parses 8 file formats, smooths time-series signals, filters outliers, and computes metrics (RMSD, CED, mweight, and custom) — all driven by YAML config.
+Parses 8 file formats, standardizes LAMMPS non-standard data into 8 original structured outputs, smooths signals, filters outliers, computes metrics — all driven by YAML config.
 
 ## Features
 
 - **8 file parsers**: Log, Bonds, Dump, Cell, Species, POS, OVITO, General
+- **8 original standardized outputs**: Bonds (bocutoff/blcutoff thresholds), Cell (Lx/Ly/Lz/Volume from Dump), Atom (id→element mapping), Species/POS (molecular weight), OVITO multi-frame integration
 - **9 smoothing algorithms**: segment_spline, adaptive_kalman, physics_constrained, robust_lowess, dynamic_wavelet, moving_avg, savgol, wavelet, ewma
 - **3 outlier filters**: zscore, MAD, IQR
 - **Config-driven** (YAML): no hardcoding, all parameters in `configs/default.yaml`
@@ -45,11 +46,11 @@ smoothed = smooth(df["temperature"], method="moving_avg")
 ```
 Input files (LAMMPS)
        ↓
-  Arrange Layer        ← 8 parsers + glob batch + YAML config
+  Arrange Layer        ← 8 parsers + 8 original standardized outputs + glob batch + YAML config
        ↓
    DataFrame
        ↓
-  Mapping Layer       ← 9 smoothers + 3 filters
+  Mapping Layer       ← 9 smoothers + 3 filters + metrics (RMSD/CED/mweight)
        ↓
    Output files
        ↑
