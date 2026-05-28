@@ -21,11 +21,11 @@
 **画面**: 三个卡片（海量异构数据 / 传统方案局限 / 无可追溯性）+ 底部解决方框
 
 **旁白**:
-> 分子动力学模拟，特别是使用 ReaxFF 反应力场时，会产生海量数据：热力学输出、键拓扑演化、原子轨迹、化学物种浓度。
+> 分子动力学模拟，特别是使用 ReaxFF 反应力场时，会产生海量非标准数据：热力学输出、键拓扑演化、原子轨迹、化学物种浓度。
 >
-> 传统方案依赖 OVITO、VMD 等 GUI 工具，或者定制 Python 脚本——问题是参数硬编码，无法批量处理，更没有可追溯性。
+> 传统方案依赖 OVITO、VMD 等工具计算派生物理量——但它们无法处理原始数据的标准化、去噪和过滤。
 >
-> lmpsmart 从根本上解决这三个问题：YAML 配置驱动零硬编码，Glob 批量匹配，JSONL 执行日志完整记录每一步操作。
+> lmpsmart 从根本上解决这些问题：8 大原创标准化输出（Bond 阈值、Cell 提取、Atom 映射、分子量等），YAML 配置驱动零硬编码，9 种平滑加曲线拟合，Glob 批量匹配，JSONL 执行日志完整记录每一步操作。
 
 ---
 
@@ -36,43 +36,45 @@
 **旁白**:
 > lmpsmart 采用三层架构设计。
 >
-> 第一层是 Arrange Layer，接收 LAMMPS 文件，通过 8 种专用解析器，将原始数据转换为 pandas DataFrame——所有解析规则完全由 YAML 配置驱动，没有硬编码。
+> 第一层是 Arrange Layer，接收 LAMMPS 文件，通过 8 种专用解析器，将原始数据转换为 pandas DataFrame——更重要的是，它将 LAMMPS 的非标准数据转化为 8 种标准一维结构化输出，包括：Bonds 附加键序和键长阈值、Dump 轨迹提取晶胞维度、Atom 编号映射元素、Species/POS 附加分子量、OVITO 多帧整合为单表。
 >
-> 第二层是 Mapping Layer，对 DataFrame 应用 9 种平滑算法和 3 种异常值过滤方法。
+> 第二层是 Mapping Layer，对 DataFrame 应用 9 种平滑算法、曲线拟合（polyfit.n 多项式拟合、LOWESS 局部回归）和 3 种异常值过滤方法。
 >
 > 第三层是 Agent Controller，它接收自然语言目标，通过 plan_from_goal() 规划工具链，execute() 执行每一步，所有操作自动记录到 JSONL 日志。
 
 ---
 
-## Slide 4: Arrange Layer（45秒）
+## Slide 4: Arrange Layer（1分钟）
 
-**画面**: 4×2 卡片网格，每个卡片有颜色边框、图标、名称和描述
+**画面**: 左侧 8 种文件格式网格 + 右侧 8 大原创标准化输出
 
 **旁白**:
-> Arrange Layer 支持 8 种文件格式。
+> Arrange Layer 的核心价值在于：将 LAMMPS 的非标准数据——键序文件、多帧轨迹、原子坐标——全部转化为标准一维结构化 DataFrame。
 >
-> Log 解析热力学输出，Bonds 解析 ReaxFF 键序分析，Bonds 支持 30 种键类型。
+> 它支持 8 种文件格式：Log 解析热力学输出，Bonds 解析 ReaxFF 键序并附加 bocutoff 键序阈值和 blcutoff 键长阈值——这是 lmpsmart 的原创功能，方便用户直接按阈值筛选有效键。
 >
-> Dump 处理原子轨迹，Cell 提取晶胞维度变化，Species 追踪化学物种。
+> Dump 处理原子轨迹，同时能提取晶胞维度（Lx、Ly、Lz、Volume）作为独立数据表——这也是原创功能。Atom 列在解析时自动建立原子编号到元素的映射。
 >
-> POS 兼容 POSCAR 晶体格式，OVITO 处理可视化中间导出，General 自动检测 CSV 和 TSV。
+> Species 和 POS 额外附加分子量输出（molecular_weight），OVITO 导出的多帧 Excel 整合为一张一维数据表，General 自动检测 CSV 和 TSV。
 >
-> 所有格式支持 Glob 通配符——输入目录中有多少文件，自动全部解析，自动输出 split 编号。
+> 所有格式支持 Glob 通配符——输入目录有多少文件，自动全部解析，自动 split 编号命名。
 
 ---
 
 ## Slide 5: Mapping Layer（1分钟）
 
-**画面**: 深色背景，三个平滑算法分类组 + 底部三个过滤方法
+**画面**: 深色背景，三个平滑+拟合分类组 + 底部三个过滤方法
 
 **旁白**:
-> Mapping Layer 实现 9 种平滑算法，分三类。
+> Mapping Layer 实现 9 种平滑算法加曲线拟合，分三类。
 >
-> 物理约束类包括：segment_spline 在拐点分割后拟合样条；adaptive_kalman 用卡尔曼滤波自适应估计噪声；physics_constrained 用约束最小二乘施加物理约束。
+> 物理约束类：segment_spline 在拐点分割后拟合样条；adaptive_kalman 用卡尔曼滤波自适应估计噪声；physics_constrained 用约束最小二乘施加物理约束。
 >
-> 统计平滑类包括：robust_lowess 用局部加权散点平滑加双平方鲁棒估计；moving_avg 滑动平均快速去噪；ewma 指数加权移动平均。
+> 统计平滑类：robust_lowess 用局部加权散点平滑加双平方鲁棒估计；moving_avg 滑动平均快速去噪；ewma 指数加权移动平均。
 >
-> 频域处理类包括：小波变换 wavelet、动态小波 denoising dynamic_wavelet、以及 Savitzky-Golay 滤波器 savgol——后者在保持峰形方面特别出色。
+> 频域处理类：小波变换 wavelet、动态小波 denoising dynamic_wavelet、以及 Savitzky-Golay 滤波器 savgol——后者在保持峰形方面特别出色。
+>
+> 曲线拟合：polyfit.n 多项式拟合（含 R² 报告）和 LOWESS 局部回归——可直接输出拟合参数用于后续物理计算。
 >
 > 三种异常值过滤方法：Z-score、MAD 和 IQR，分别适用于不同噪声分布场景。
 
@@ -83,7 +85,7 @@
 **画面**: 四步流程图（Goal → plan_from_goal → execute → JSONL）+ 三列工具分类
 
 **旁白**:
-> lmpsmart 的核心创新是将 Tkinter GUI 转化为 Agent 架构。
+> lmpsmart 的核心创新是基于 Agent 架构自主规划数据处理流水线。
 >
 > Agent 接收自然语言目标——比如"解析日志文件并平滑温度曲线"。
 >
@@ -147,16 +149,20 @@
 
 ---
 
-## Slide 11: GUI vs Agent（45秒）
+## Slide 11: lmpsmart vs 主流 LAMMPS 数据处理工具（1分钟）
 
-**画面**: 表格对比（六行维度），Agent 列高亮显示 ✓
+**画面**: 四列对比表（OVITO / mdapy / MDAnalysis / lmpsmart），十行维度，lmpsmart 列全部高亮 ✓
 
 **旁白**:
-> 为什么 Agent 架构优于传统 GUI？
+> lmpsmart 与 OVITO、mdapy、MDAnalysis 的核心差异在哪里？
 >
-> GUI 是用户界面，不是 Agent——它只是把用户点击映射到函数调用，没有推理、没有规划、没有自主决策。
+> 这三个工具都是计算派生物理量的——OVITO 的 RDF、Voronoi 分析、位错分析，mdapy 的 CHILL+ 算法，MDAnalysis 的 RMSD、RDF。
 >
-> lmpsmart Agent 能从自然语言目标自主规划工具链，支持批量处理，自动记录可追溯日志，还能接入 LLM 做更智能的推理。这是 GUI 架构根本无法实现的。
+> 但它们都没有：数据标准化输出（Bond 阈值、Cell 提取、Atom 映射、分子量）、9 种平滑算法、polyfit/lowess 曲线拟合、统计异常值过滤、专业出版级曲线绘图、以及 Agent 自然语言接口。
+>
+> OVITO 只能输出专业 3D 原子模型图，无法直接导出出版级曲线图；lmpsmart 内置 YAML 配置的 matplotlib，专业曲线一键生成。
+>
+> lmpsmart 的定位是：其他工具的上游数据清洗层——先把温度、压力、能量曲线洗干净，再交给 OVITO 计算 RDF、交给 MDAnalysis 计算 RMSD。
 
 ---
 
@@ -166,7 +172,8 @@
 
 **旁白**:
 > lmpsmart v1.0.0 核心特性：
-> 8 种文件格式解析，9 种平滑算法加 3 种过滤方法，零硬编码的 YAML 配置驱动，以及完整的 JSONL 执行日志。
+>
+> 8 种文件格式解析，8 大原创标准化输出（Bonds 阈值、Cell 提取、Atom 映射、分子量等），9 种平滑算法加曲线拟合，3 种统计异常值过滤，零硬编码的 YAML 配置驱动，Agent 自然语言接口，以及完整的 JSONL 执行日志。
 >
 > 未来方向：LLM 推理替换关键词匹配、Web UI、云端 Docker 部署、自动化统计验证。
 >
