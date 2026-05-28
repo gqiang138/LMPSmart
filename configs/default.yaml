@@ -1,0 +1,198 @@
+cutoff:
+  bonds:
+    - CC
+    - CN
+    - CO
+    - CH
+    - NN
+    - "NO"
+    - NH
+    - OO
+    - OH
+    - HH
+    - "NC"
+    - OC
+    - HC
+    - "ON"
+    - HN
+    - HO
+    - AlC
+    - AlH
+    - AlN
+    - AlO
+    - CAl
+    - HAl
+    - NAl
+    - OAl
+    - AlAl
+    - C
+    - N
+    - O
+    - H
+    - Al
+  bocutoff:
+    - 0.55
+    - 0.30
+    - 0.65
+    - 0.40
+    - 0.55
+    - 0.40
+    - 0.55
+    - 0.65
+    - 0.40
+    - 0.55
+    - 0.30
+    - 0.65
+    - 0.40
+    - 0.40
+    - 0.55
+    - 0.40
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.30
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+  blcutoff:
+    - 1.8
+    - 2.1
+    - 1.9
+    - 1.5
+    - 2.1
+    - 1.5
+    - 3.0
+    - 3.0
+    - 3.0
+    - 3.0
+    - 2.1
+    - 1.9
+    - 1.5
+    - 1.5
+    - 3.0
+    - 3.0
+    - 3.2
+    - 2.0
+    - 3.0
+    - 2.8
+    - 3.2
+    - 2.0
+    - 3.0
+    - 2.8
+    - 2.8
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+
+filerule1:
+  datafilename: "*.anm"
+  logfilename: "log.lammps*"
+  bondsfilename: "bonds.reax.bof"
+  dumpfilename: "*.trj"
+  dumpfilename2: "dataofdump.*"
+  speciesfilename: "species*"
+  posfilename: "*.pos"
+  ovitofilename: "ovito.*"
+  # 保留文件 (通用)
+  cellfilename: "cell*"
+  generalfilename: "*"
+
+filerule2:
+  datafilename: "*.anm"
+  logfilename: "dataoflog*"
+  bondsfilename2: "dataofbonds.*"
+  dumpfilename: "dataofdump.*"
+  cellfilename: "dataofcell.*"
+  dumpbondsfilename: "dataofdumpbonds.*"
+  speciesfilename2: "dataofspecies.*"
+  posfilename2: "dataofpos.*"
+  ovitofilename2: "dataofovito.xlsx"
+  customfilename: "abc*.csv"
+
+plotset:
+  multifig:
+    width: 14
+    high: 6
+    dpi: 600
+    labelsize: 20
+    ticksize: 18
+    fontscale: 1.5
+    subadjust:
+      wspace: 0.2
+      hspace: 0.2
+  singlescale:
+    width: 8
+    high: 6
+    dpi: 600
+    labelsize: 16
+    ticksize: 14
+    fontscale: 1.5
+  doubleyscale:
+    y1color: "black"
+    y2color: "red"
+    y2tickcolor: "red"
+    y2labelcolor: "red"
+  figallscale:
+    loc: ""
+    mark: false
+    legendunit: "K/ps"
+
+bonds_limit:
+  Al: 6
+  C: 4
+  H: 1
+  N: 3
+  O: 2
+
+timestep:
+  default: "0.1"
+  options:
+    - "0.01"
+    - "0.1"
+    - "0.2"
+    - "0.25"
+
+thermostep:
+  default: "1000"
+  options:
+    - "250"
+    - "400"
+    - "500"
+    - "1000"
+    - "2500"
+
+ignoredtime:
+  default: "0"
+  options:
+    - "0"
+    - "10"
+
+supercell:
+  default: "1,1,1"
+  options:
+    - "1,1,1"
+    - "2,2,2"
+    - "3,3,3"
+    - "4,4,4"
+
+periodicity:
+  default: "ppp"
+  options:
+    - "ppp"
+    - "pps"
+    - "sss"
+
+encoding:
+  default: "UTF-8"
+  options:
+    - "UTF-8"
+    - "GBK"

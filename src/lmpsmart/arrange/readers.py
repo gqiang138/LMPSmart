@@ -1,0 +1,549 @@
+# Copyright (c) 2025 Qiang Gan
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""LAMMPS file readers for Arrange module."""
+from __future__ import annotations
+import re
+import os
+import glob
+import chardet
+from pathlib import Path
+from typing import Literal, Any
+import numpy as np
+import pandas as pd
+from openpyxl import load_workbook
+
+
+def detect_encoding(file_path: str) -> str:
+    with open(file_path, "rb") as f:
+        result = chardet.detect(f.read(1000))
+    return result.get("encoding", "utf-8") or "utf-8"
+
+
+def autocode(file_path: str, engine: str = "pandas", **kwargs) -> pd.DataFrame | Any:
+    encoding = detect_encoding(file_path)
+    sep = kwargs.get("sep", r"\s+")
+    header = kwargs.get("header", None)
+    if engine == "pandas":
+        try:
+            return pd.read_csv(file_path, sep=sep, encoding=encoding, header=header)
+        except Exception:
+            return pd.read_csv(file_path, encoding=encoding)
+
+
+def df_atoms(data_path: str) -> list[dict]:
+    with open(data_path, encoding="utf-8") as f:
+        lines = f.readlines()
+    atoms_section = False
+    atoms_data = []
+    for line in lines:
+        stripped = line.strip()
+        if "Atoms" in stripped and ("full" in stripped or "charge" in stripped or "bond" in stripped):
+            atoms_section = True
+            continue
+        if atoms_section:
+            if stripped == "" or stripped.isdigit():
+                break
+            parts = stripped.split()
+            if len(parts) >= 4:
+                atom_id = int(parts[0])
+                mol_id = int(parts[1])
+                atom_type = int(parts[2])
+                x, y, z = float(parts[3]), float(parts[4]), float(parts[5])
+                atoms_data.append(
+                    {"id": atom_id, "molecule": mol_id, "type": atom_type, "x": x, "y": y, "z": z}
+                )
+    return atoms_data
+
+
+def df_masses(data_path: str) -> pd.DataFrame:
+    with open(data_path, encoding="utf-8") as f:
+        lines = f.readlines()
+    masses_section = False
+    masses_data = []
+    for line in lines:
+        stripped = line.strip()
+        if "Masses" in stripped:
+            masses_section = True
+            continue
+        if masses_section:
+            if stripped == "" or stripped.isdigit():
+                break
+            parts = stripped.split()
+            if len(parts) >= 2:
+                try:
+                    masses_data.append({"type": int(parts[0]), "mass": float(parts[1])})
+                except ValueError:
+                    continue
+    return pd.DataFrame(masses_data)
+
+
+def read_data(
+    data_path: str,
+    encoding: str = "utf-8",
+    config: Any = None,
+) -> dict[str, pd.DataFrame]:
+    result = {}
+    dfatoms = pd.DataFrame(df_atoms(data_path))
+    dfatoms["type"] = dfatoms["type"].astype(int)
+    dfatoms = dfatoms[dfatoms["type"] != 0]
+    dfmasses = df_masses(data_path)
+    if not dfmasses.empty:
+        dfatoms = dfatoms.merge(dfmasses, on="type", how="left")
+    with open(data_path, encoding="utf-8") as f:
+        lines = f.readlines()
+    for line in lines:
+        stripped = line.strip()
+        if "Atoms" in stripped:
+            if "full" in stripped:
+                result["atom_style"] = "full"
+            elif "charge" in stripped:
+                result["atom_style"] = "charge"
+            break
+    result["atoms"] = dfatoms
+    return result
+
+
+def read_log(
+    log_path: str,
+    log_indices: list[int] | None = None,
+    supercell: tuple[int, int, int] | None = None,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+) -> pd.DataFrame:
+    with open(log_path, encoding=encoding) as f:
+        loglines = f.read().splitlines()
+    line0, line1 = [], []
+    for i, line in enumerate(loglines):
+        tokens = re.split(r" +", line.strip())
+        if tokens and tokens[0] == "Step":
+            line0.append(i)
+        elif tokens and tokens[0] == "Loop":
+            line1.append(i)
+    if not line0:
+        raise ValueError(f"No Step data found in {log_path}")
+    if log_indices is None:
+        log_indices = list(range(len(line0)))
+    logcolumns = re.split(r" +", loglines[line0[log_indices[0]]].strip())
+    dflog = pd.DataFrame()
+    for idx in log_indices:
+        if idx >= len(line0):
+            continue
+        end = line1[idx] if idx < len(line1) else len(loglines) - 1
+        rows = []
+        for k in loglines[line0[idx] + 1 : end]:
+            tokens = re.split(r" +", k.strip())
+            if len(tokens) == len(logcolumns):
+                rows.append(tokens)
+        dflog = pd.concat([dflog, pd.DataFrame(rows, columns=logcolumns)], ignore_index=True)
+    dflog = dflog.groupby("Step").first().reset_index()
+    if "Press" in dflog.columns:
+        dflog["Press"] = dflog["Press"].astype(float) / 10000
+    if supercell is not None:
+        sa, sb, sc = supercell
+        if "Cella" in dflog.columns:
+            dflog["Cella"] = dflog["Cella"].astype(float) / sa
+        if "Cellb" in dflog.columns:
+            dflog["Cellb"] = dflog["Cellb"].astype(float) / sb
+        if "Cellc" in dflog.columns:
+            dflog["Cellc"] = dflog["Cellc"].astype(float) / sc
+        if "Volume" in dflog.columns:
+            dflog["Volume"] = dflog["Volume"].astype(float) / (sa * sb * sc)
+    dflog = dflog.rename(columns={"Step": "frame"})
+    dflog["frame"] = dflog["frame"].astype(int) - int(ignored_time * 1000 / timestep)
+    dflog["frame"] = dflog["frame"].astype(int)
+    dflog = dflog.sort_values("frame", ascending=True)
+    dflog.insert(1, "time", round(dflog["frame"] * timestep * 0.001, 3))
+    return dflog
+
+
+def read_bonds(
+    bonds_path: str,
+    data_path: str | None = None,
+    dfatoms: pd.DataFrame | None = None,
+    dfcutoff: pd.DataFrame | None = None,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+) -> pd.DataFrame:
+    if dfatoms is None and data_path:
+        dfatoms = pd.DataFrame(df_atoms(data_path))
+        dfatoms["type"] = dfatoms["type"].astype(int)
+        dfatoms = dfatoms[dfatoms["type"] != 0]
+    with open(bonds_path, encoding=encoding) as f:
+        bondslines = f.read().splitlines()
+    if len(bondslines) < 10:
+        raise ValueError(f"bonds file too short: {bonds_path}")
+    try:
+        atomall = int(bondslines[2].split()[4])
+    except (IndexError, ValueError) as e:
+        raise ValueError(f"Cannot parse atom count from bonds file {bonds_path} line 3: {e}")
+    listid, listtype = [], []
+    for i in range(7, atomall + 7):
+        match = re.findall(r"[+\-]?[0-9]*\.?[0-9]+", bondslines[i])
+        listid.append(int(match[0]))
+        listtype.append(int(match[1]))
+    dictidtype = dict(zip(listid, listtype))
+    bondslist = []
+    for i, line in enumerate(bondslines):
+        if "Timestep" in line:
+            frame = int(line.split(" ")[2])
+            try:
+                for j in range(i + 7, i + 7 + atomall):
+                    match = re.findall(r"[+\-]?[0-9]*\.?[0-9]+", bondslines[j])
+                    if len(match) < 4:
+                        continue
+                    n_bonds = int(match[2])
+                    if n_bonds > 0:
+                        for k in range(n_bonds):
+                            bondslist.append(
+                                [
+                                    frame,
+                                    int(match[0]),
+                                    int(match[3 + k]),
+                                    int(match[1]),
+                                    dictidtype.get(int(match[3 + k]), 0),
+                                    float(match[3 + n_bonds + k + 1]),
+                                ]
+                            )
+                    elif n_bonds == 0:
+                        bondslist.append([frame, int(match[0]), 0, int(match[1]), 0, 0])
+            except Exception:
+                continue
+    dfbonds = pd.DataFrame(
+        bondslist, columns=["frame", "id1", "id2", "type1", "type2", "bo"]
+    )
+    if dfatoms is not None and "element" in dfatoms.columns:
+        dfbonds["bonds"] = (
+            dfbonds["type1"].map(dict(zip(dfbonds["type1"], dfatoms["element"])))
+            + dfbonds["type2"].map(dict(zip(dfbonds["type2"], dfatoms["element"])))
+        ).fillna("")
+    dfbonds = dfbonds.groupby(["frame", "id1", "id2"]).first().reset_index()
+    if dfcutoff is not None and not dfcutoff.empty:
+        if dfcutoff.loc[0, "bonds"] == "":
+            dfbonds["bocutoff"] = dfcutoff.loc[0, "bocutoff"]
+            dfbonds["blcutoff"] = dfcutoff.loc[0, "blcutoff"]
+            dfbonds.loc[dfbonds["id2"] == 0, "bocutoff"] = np.nan
+            dfbonds.loc[dfbonds["id2"] == 0, "blcutoff"] = np.nan
+        else:
+            dfbonds = dfbonds.merge(dfcutoff, how="left", on="bonds")
+    dfbonds["frame"] = dfbonds["frame"].astype(int) - int(ignored_time * 1000 / timestep)
+    dfbonds["frame"] = dfbonds["frame"].astype(int)
+    dfbonds.insert(1, "time", round(dfbonds["frame"] * timestep * 0.001, 3))
+    return dfbonds
+
+
+def read_dump(
+    dump_path: str,
+    data_path: str | None = None,
+    dfatoms: pd.DataFrame | None = None,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+) -> pd.DataFrame:
+    if dfatoms is None and data_path:
+        dfatoms = pd.DataFrame(df_atoms(data_path))
+        dfatoms["type"] = dfatoms["type"].astype(int)
+        dfatoms = dfatoms[dfatoms["type"] != 0]
+    with open(dump_path, encoding=encoding) as f:
+        dumplines = f.read().splitlines()
+    pattern = re.compile(r"ITEM: TIMESTEP")
+    framelines = [i for i, line in enumerate(dumplines) if pattern.search(line)]
+    if not framelines:
+        raise ValueError(f"No TIMESTEP found in {dump_path}")
+    dumpcolumns = re.split(r" +", dumplines[framelines[0] + 8])[2:]
+    dfdump = pd.DataFrame()
+    for idx in framelines:
+        frame0 = int(dumplines[idx + 1])
+        atomall = int(dumplines[idx + 3])
+        lines = dumplines[idx + 9 : idx + 9 + atomall]
+        data = [re.split(r" +", j) for j in lines]
+        dfdump0 = pd.DataFrame(data, columns=dumpcolumns)
+        dfdump0.insert(0, "frame", frame0)
+        dfdump = pd.concat([dfdump, dfdump0], ignore_index=True)
+    dfdump.rename(columns={"xu": "x", "yu": "y", "zu": "z"}, inplace=True)
+    nullframelist = dfdump[dfdump.isna().any(axis=1)]["frame"].tolist()
+    if nullframelist:
+        dfdump = dfdump[~dfdump["frame"].isin(nullframelist)]
+    dfdump["frame"] = dfdump["frame"] - int(ignored_time * 1000 / timestep)
+    dfdump["frame"] = dfdump["frame"].astype(int)
+    dfdump.insert(1, "time", round(dfdump["frame"] * timestep * 0.001, 3))
+    dfdump[["id", "type"]] = dfdump[["id", "type"]].astype(int)
+    dfdump = dfdump.sort_values(["frame", "id"], ascending=True)
+    if dfatoms is not None:
+        if "mass" not in dfdump.columns.tolist():
+            dfdump = dfdump.merge(dfatoms, how="left", on="type")
+        else:
+            dfdump = dfdump.merge(dfatoms[["type", "element"]], how="left", on="type")
+    return dfdump
+
+
+def read_cell(
+    dump_path: str,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+) -> pd.DataFrame:
+    with open(dump_path, encoding=encoding) as f:
+        lines = f.read().splitlines()
+    pattern_step = re.compile(r"ITEM: TIMESTEP")
+    pattern_bounds = re.compile(r"ITEM: BOX BOUNDS")
+    frames, cell_data = [], []
+    i = 0
+    while i < len(lines):
+        if pattern_step.search(lines[i]):
+            try:
+                frame = int(lines[i + 1])
+                i += 2
+                if pattern_bounds.search(lines[i]):
+                    bounds_line = lines[i]
+                    i += 1
+                    lohi = []
+                    for _ in range(3):
+                        parts = lines[i].strip().split()
+                        lohi.append((float(parts[0]), float(parts[1])))
+                        i += 1
+                    lx = lohi[0][1] - lohi[0][0]
+                    ly = lohi[1][1] - lohi[1][0]
+                    lz = lohi[2][1] - lohi[2][0]
+                    volume = lx * ly * lz
+                    frames.append(
+                        {
+                            "frame": frame - int(ignored_time * 1000 / timestep),
+                            "Lx": lx,
+                            "Ly": ly,
+                            "Lz": lz,
+                            "Volume": volume,
+                        }
+                    )
+                else:
+                    i += 3
+            except (ValueError, IndexError):
+                i += 1
+        else:
+            i += 1
+    dfcell = pd.DataFrame(frames)
+    dfcell["frame"] = dfcell["frame"].astype(int)
+    dfcell.insert(1, "time", round(dfcell["frame"] * timestep * 0.001, 3))
+    return dfcell
+
+
+def read_species(
+    species_path: str,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+) -> pd.DataFrame:
+    ext = Path(species_path).suffix.lower()
+    if ext == ".csv":
+        df = pd.read_csv(species_path, encoding=encoding)
+    elif ext in [".xlsx", ".xls"]:
+        df = pd.read_excel(species_path)
+    else:
+        df = autocode(species_path, "pandas")
+    df.columns = [c.strip() for c in df.columns]
+    if "frame" not in df.columns and "Step" in df.columns:
+        df = df.rename(columns={"Step": "frame"})
+        df["frame"] = df["frame"].astype(int) - int(ignored_time * 1000 / timestep)
+        df["frame"] = df["frame"].astype(int)
+        df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
+    return df
+
+
+def read_pos(
+    pos_path: str,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+) -> pd.DataFrame:
+    with open(pos_path, encoding=encoding) as f:
+        lines = f.readlines()
+    frames_data = {}
+    current_frame = None
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            continue
+        parts = stripped.split()
+        if len(parts) < 4:
+            continue
+        try:
+            frame = int(float(parts[0]))
+        except ValueError:
+            continue
+        if frame != current_frame:
+            current_frame = frame
+            frames_data[frame] = []
+        frames_data[frame].append(
+            {
+                "x": float(parts[1]),
+                "y": float(parts[2]),
+                "z": float(parts[3]),
+                "element": parts[4] if len(parts) > 4 else "X",
+            }
+        )
+    rows = []
+    for frame, atoms in frames_data.items():
+        for atom in atoms:
+            rows.append(
+                {
+                    "frame": frame - int(ignored_time * 1000 / timestep),
+                    "x": atom["x"],
+                    "y": atom["y"],
+                    "z": atom["z"],
+                    "element": atom["element"],
+                }
+            )
+    dfpos = pd.DataFrame(rows)
+    dfpos["frame"] = dfpos["frame"].astype(int)
+    dfpos.insert(1, "time", round(dfpos["frame"] * timestep * 0.001, 3))
+    return dfpos
+
+
+def read_ovito(
+    ovito_path: str,
+    sheet_name: int = 0,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+) -> pd.DataFrame:
+    df = pd.read_excel(ovito_path, sheet_name=sheet_name, header=0)
+    if "Frame" in df.columns:
+        df["frame"] = df["Frame"].astype(int) - int(ignored_time * 1000 / timestep)
+        df["frame"] = df["frame"].astype(int)
+        df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
+    return df
+
+
+def read_general(
+    file_path: str,
+    sep: str | None = None,
+    header: int | None = None,
+    encoding: str | None = None,
+) -> pd.DataFrame:
+    if encoding is None:
+        encoding = detect_encoding(file_path)
+    if sep is None:
+        ext = Path(file_path).suffix.lower()
+        if ext == ".csv":
+            sep = ","
+        else:
+            sep = r"\s+"
+    df = pd.read_csv(file_path, sep=sep, encoding=encoding, header=header)
+    df.columns = [c.strip() for c in df.columns]
+    return df
+
+
+def arrange(
+    input_path: str,
+    modes: list[str],
+    output_path: str | None = None,
+    config: Any = None,
+    ignored_time: float = 0.0,
+    timestep: float = 0.1,
+    encoding: str = "utf-8",
+    supercell: tuple[int, int, int] | None = None,
+    log_indices: list[int] | None = None,
+) -> dict[str, pd.DataFrame]:
+    if config is None:
+        from lmpsmart.arrange.config import load_config
+        config = load_config()
+
+    if output_path is None:
+        output_path = input_path
+    os.makedirs(output_path, exist_ok=True)
+
+    results = {}
+    data_pattern = config.filerule1.datafilename
+    data_files = glob.glob(os.path.join(input_path, data_pattern))
+    dfatoms = pd.DataFrame()
+    if data_files:
+        data_result = read_data(data_files[0], encoding=encoding, config=config)
+        dfatoms = data_result.get("atoms", pd.DataFrame())
+
+    cutoff_raw = config.cutoff
+    dfcutoff = pd.DataFrame(
+        {"bonds": cutoff_raw.bonds, "bocutoff": cutoff_raw.bocutoff, "blcutoff": cutoff_raw.blcutoff}
+    )
+
+    def _save(df: pd.DataFrame, prefix: str, idx: int | None = None, suffix: str = "", extra: str = ""):
+        name = prefix
+        if idx is not None:
+            name += f".split{idx}"
+        if extra:
+            name += f".{extra}"
+        if suffix:
+            name += f".{suffix}"
+        df.to_csv(os.path.join(output_path, f"{name}.csv"), encoding="utf-8-sig", index=False)
+
+    for mode in modes:
+        mode = mode.strip()
+        if mode == "Log":
+            log_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.logfilename)))
+            for n, lf in enumerate(log_files):
+                df_log = read_log(
+                    lf, log_indices=log_indices, supercell=supercell,
+                    ignored_time=ignored_time, timestep=timestep, encoding=encoding,
+                )
+                _save(df_log, "dataoflog", None if len(log_files) == 1 else n)
+                if n == 0:
+                    results["log"] = df_log
+
+        elif mode == "Bonds":
+            bonds_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.bondsfilename)))
+            for n, bf in enumerate(bonds_files):
+                df_b = read_bonds(
+                    bf, data_path=data_files[0] if data_files else None,
+                    dfatoms=dfatoms, dfcutoff=dfcutoff,
+                    ignored_time=ignored_time, timestep=timestep, encoding=encoding,
+                )
+                _save(df_b, "dataofbonds", None if len(bonds_files) == 1 else n)
+                if n == 0:
+                    results["bonds"] = df_b
+
+        elif mode == "Dump":
+            dump_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.dumpfilename)))
+            for n, df_path in enumerate(dump_files):
+                df_d = read_dump(
+                    df_path, data_path=data_files[0] if data_files else None,
+                    dfatoms=dfatoms,
+                    ignored_time=ignored_time, timestep=timestep, encoding=encoding,
+                )
+                _save(df_d, "dataofdump", None if len(dump_files) == 1 else n)
+                if n == 0:
+                    results["dump"] = df_d
+
+        elif mode == "Cell":
+            cell_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.cellfilename)))
+            if cell_files:
+                results["cell"] = read_cell(
+                    cell_files[0], ignored_time=ignored_time, timestep=timestep, encoding=encoding,
+                )
+                _save(results["cell"], "dataofcell", None if len(cell_files) == 1 else 0)
+
+        elif mode == "Species":
+            species_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.speciesfilename)))
+            for n, sf in enumerate(species_files):
+                df_s = read_species(sf, ignored_time=ignored_time, timestep=timestep, encoding=encoding)
+                _save(df_s, "dataofspecies", None if len(species_files) == 1 else n)
+                if n == 0:
+                    results["species"] = df_s
+
+        elif mode == "POS":
+            pos_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.posfilename)))
+            for n, pf in enumerate(pos_files):
+                df_p = read_pos(pf, ignored_time=ignored_time, timestep=timestep, encoding=encoding)
+                _save(df_p, "dataofpos", None if len(pos_files) == 1 else n)
+                if n == 0:
+                    results["pos"] = df_p
+
+        elif mode == "OVITO":
+            ovito_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.ovitofilename)))
+            for n, of in enumerate(ovito_files):
+                df_o = read_ovito(of, ignored_time=ignored_time, timestep=timestep)
+                _save(df_o, "dataofovito", None if len(ovito_files) == 1 else n)
+                if n == 0:
+                    results["ovito"] = df_o
+
+    return results

@@ -1,0 +1,9 @@
+provider: local
+base_url: http://localhost:11434
+api_key: sk-or-test
+default_model: qwen3:8b
+timeout: 120
+task_models:
+  plan: qwen3:8b
+  chat: qwen3:8b
+  coding: qwen3:8b
