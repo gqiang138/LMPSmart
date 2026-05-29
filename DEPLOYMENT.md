@@ -1,260 +1,393 @@
-# Deployment Guide
+# lmpsmart v1.0 系统部署与运行指南
 
-## System Requirements
+> Data Agent 系统代码开源地址: https://github.com/gqiang138/LMPSmart
+>
+> 本文档提供完整的系统部署与运行指南，确保系统能够被复现与验证。
 
-- Python >= 3.10
-- pip
-- Optional: pykalman (for adaptive_kalman smoother), pywavelets (for wavelet smoother)
+---
 
-## Installation
+## 1. 系统概述
 
-### Option A: Smart Installer (Recommended)
+lmpsmart 是一个基于 Agent 架构的 LAMMPS 分子动力学数据处理工具，支持：
+
+- **8种文件解析**：Log、Bonds、Dump、Cell、Species、POS、OVITO、General
+- **8种原创标准化输出**：键序阈值筛选、晶胞维度提取、原子类型映射、分子量计算
+- **9种平滑算法** + 曲线拟合 + **3种异常值过滤**
+- **7种绘图类型** + **4种动图模式**
+- **25个 MCP 工具**，通过 Model Context Protocol 向 AI Agent 暴露
+- 完整 JSONL 执行日志，支持全流程可追溯
+
+---
+
+## 2. 系统架构
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Arrange Layer      ← 8 parsers + 8 原创标准化输出   │
+│                     + glob 批量匹配 + YAML 配置驱动   │
+└──────────────────────────┬──────────────────────────┘
+                           ↓
+                     pandas DataFrame
+                           ↓
+┌─────────────────────────────────────────────────────┐
+│  Mapping Layer     ← 9 smoothers + curve fitting    │
+│                     + 3 filters + 7 plots + 4 动画  │
+└──────────────────────────┬──────────────────────────┘
+                           ↓
+                       Output files
+┌─────────────────────────────────────────────────────┐
+│  Agent Controller   ← plan_from_goal() → execute()    │
+│                     + ExecutionLogger (JSONL)        │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. 运行环境要求
+
+### 3.1 软件环境
+
+| 组件 | 版本要求 | 说明 |
+|------|---------|------|
+| Python | >= 3.10 | 推荐 3.12 |
+| pip | 最新版 | 包管理器 |
+
+### 3.2 核心依赖（必需）
+
+```
+numpy, pandas, scipy, statsmodels, pyyaml, pydantic>=2,
+openpyxl, chardet, matplotlib
+```
+
+### 3.3 可选依赖
+
+| 包 | 用途 | 安装命令 |
+|----|------|---------|
+| `mcp` | MCP Server（stdio/HTTP 传输） | `pip install mcp` |
+| `pykalman` | 自适应卡尔曼平滑器 | `pip install pykalman` |
+| `pywavelets` | 小波变换平滑器 | `pip install pywavelets` |
+| `pillow` | 动图 GIF 输出 | `pip install pillow` |
+
+### 3.4 硬件要求
+
+- 最低：4GB RAM，多核 CPU
+- 推荐：8GB+ RAM，支持并行计算
+- 磁盘：至少 500MB（不含模拟数据）
+
+---
+
+## 4. 安装方式
+
+### 方式一：智能安装向导（推荐）
 
 ```bash
+git clone https://github.com/gqiang138/LMPSmart
+cd lmpsmart
 python install.py
 ```
 
-Interactive wizard that:
-1. Auto-detects conda / venv / pyenv / system Python environments
-2. Creates new conda env (Python 3.12) or venv if needed
-3. Installs core + optional packages
-4. Verifies installation
-5. Offers optional LLM configuration (can be skipped)
+安装向导自动检测 conda / venv / 系统 Python 环境，可选配置 LLM。
 
-### Option B: Manual
+### 方式二：手动安装
 
 ```bash
-# 1. Clone
-git clone <repo>
+git clone https://github.com/gqiang138/LMPSmart
 cd lmpsmart
+pip install -e .
 
-# 2. Create environment (optional)
+# 验证安装
+python -m lmpsmart config --show
+```
+
+### 方式三：使用现有环境
+
+```bash
+# conda 环境
 conda create -n lmpsmart python=3.12 -y
 conda activate lmpsmart
-
-# 3. Install
 pip install -e .
+```
 
-# 4. Verify
+---
+
+## 5. 快速启动
+
+### 5.1 CLI 模式
+
+```bash
+# 查看配置
+python -m lmpsmart config --show
+
+# 解析 LAMMPS 文件
+python -m lmpsmart arrange --path ./data --modes Log,Bonds,Dump
+
+# Agent 模式（自然语言驱动）
+python -m lmpsmart agent --goal "平滑温度曲线并去除异常值"
+
+# 绘图
+python -m lmpsmart plot --csv output/arrange/dataoflog.csv \
+    --x time --y TempEng --mode single --output energy.png
+```
+
+### 5.2 Python API
+
+```python
+from lmpsmart import arrange, smooth, filter_outliers
+
+# 解析数据
+df = arrange("data/", modes=["Log", "Bonds"])
+
+# 平滑信号
+smoothed = smooth(df["temperature"], method="savgol")
+
+# 过滤异常值
+filtered = filter_outliers(df, "time", "temperature", "zscore", 3.0)
+```
+
+### 5.3 MCP Server 模式（AI Agent 集成）
+
+**stdio 传输（OpenCode / Claude Desktop）：**
+
+```bash
+python -m lmpsmart.api.mcp_server
+```
+
+**HTTP 传输（Cherry Studio / 远程访问）：**
+
+```bash
+python -m lmpsmart.api.mcp_server --http --port 8765
+```
+
+---
+
+## 6. MCP Server 配置详解
+
+### 6.1 OpenCode 配置
+
+在项目根目录的 `opencode.json` 中添加：
+
+```json
+{
+  "mcp": {
+    "lmpsmart": {
+      "type": "local",
+      "command": [
+        "E:\\Program\\anaconda3\\envs\\lmpsmart\\python.exe",
+        "-m",
+        "lmpsmart.api.mcp_server"
+      ],
+      "environment": {},
+      "enabled": true
+    }
+  }
+}
+```
+
+然后在 OpenCode 中执行：
+```bash
+opencode mcp add lmpsmart E:\Program\anaconda3\envs\lmpsmart\python.exe -m lmpsmart.api.mcp_server
+```
+
+### 6.2 Cherry Studio 配置
+
+在 Settings → MCP Server 添加：
+
+| 字段 | 值 |
+|------|-----|
+| Name | lmpsmart |
+| Transport | `StreamableHTTP` |
+| URL | `http://localhost:8765/mcp` |
+
+### 6.3 Claude Desktop 配置
+
+编辑 `~/Library/Application Support/Claude/claude_desktop_config.json`（macOS）
+或 `%APPDATA%\Claude\claude_desktop_config.json`（Windows）：
+
+```json
+{
+  "mcpServers": {
+    "lmpsmart": {
+      "command": "python",
+      "args": ["-m", "lmpsmart.api.mcp_server"]
+    }
+  }
+}
+```
+
+### 6.4 可用 MCP 工具（25个）
+
+| 类别 | 工具 | 说明 |
+|------|------|------|
+| Parse | `arrange` | 解析 LAMMPS 文件 |
+| Parse | `read_log` | 读取热力学输出 |
+| Parse | `read_bonds` | 读取 ReaxFF 键序 |
+| Parse | `read_dump` | 读取轨迹文件 |
+| Parse | `read_data` | 读取 data 文件 |
+| Parse | `read_cell` | 读取晶胞维度 |
+| Parse | `read_species` | 读取物种统计 |
+| Parse | `read_pos` | 读取 POSCAR |
+| Parse | `read_general` | 通用 CSV/TSV |
+| Process | `smooth` | 9种平滑算法 |
+| Process | `filter_outliers` | 3种异常值过滤 |
+| Process | `fit` | 曲线拟合 |
+| Visualize | `plot` | 7种绘图类型 |
+| Visualize | `animate` | 4种动图模式 |
+| Clean | `groupby_aggregate` | 分组聚合 |
+| Clean | `belong_filter` | 行列筛选 |
+| Clean | `column_rename` | 列重命名 |
+| Clean | `select_columns` | 列选择 |
+| Clean | `merge_data` | 数据合并 |
+| Chemistry | `molecular_weight` | 分子量计算 |
+| Chemistry | `find_elements` | 元素提取 |
+| Chemistry | `atom_type` | 原子类型识别 |
+| Chemistry | `detect_encoding` | 编码检测 |
+| Chemistry | `autocode` | 自动解析结构 |
+| Config | `load_config` | 加载配置 |
+
+---
+
+## 7. 测试方法
+
+### 7.1 验证安装
+
+```bash
+# 工具数量验证
+python -c "from lmpsmart.api.tools import TOOL_REGISTRY; print(len(TOOL_REGISTRY))"
+# 应输出: 25
+
+# 配置加载验证
 python -m lmpsmart config --show
 ```
 
-### Option C: No environment, use current Python
+### 7.2 运行示例任务
+
+**示例1：解析 RDX 分子动力学数据**
 
 ```bash
-pip install -e .
-python -m lmpsmart config --show
+python -m lmpsmart arrange --path ./data/RDX --modes Log,Bonds,Dump
 ```
 
-### Post-install: Configure LLM (optional)
+**示例2：绘图**
 
 ```bash
-# Configure later — keyword fallback works without any LLM
+python -m lmpsmart plot --csv output/arrange/dataoflog.csv \
+    --x time --y TempEng --mode single --output output/energy.png
+```
+
+**示例3：MCP 工具调用**
+
+```bash
+# 测试 MCP server 初始化
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' \
+    | python -m lmpsmart.api.mcp_server
+# 应返回 serverInfo，包含 name: lmpsmart
+
+# 测试工具列表
+echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+    | python -m lmpsmart.api.mcp_server
+# 应返回 25 个工具
+```
+
+### 7.3 日志查看
+
+执行日志位于 `logs/agent_session_*.jsonl`：
+
+```bash
+# 查看最新日志
+ls -t logs/ | head -3
+
+# 查看日志内容
+cat logs/agent_session_$(ls -t logs/ | head -1)
+```
+
+JSONL 日志格式：
+```json
+{
+  "log_id": "a1b2c3d4e5f6",
+  "timestamp": "2026-05-29T17:12:10.640208",
+  "session_id": "9d97249f",
+  "tool": "plot",
+  "input": {"x_col": "t", "y_cols": ["e"], "plot_type": "line"},
+  "execution_steps": ["plot: x=t, y=['e']"],
+  "output_summary": {"output": "C:\\temp\\l.png"},
+  "warnings": [],
+  "status": "success",
+  "elapsed_ms": 0
+}
+```
+
+---
+
+## 8. LLM 配置
+
+lmpsmart 支持本地 Ollama 和在线 OpenAI 兼容 API：
+
+```bash
+# 本地 Ollama（默认）
 python -m lmpsmart llm setup --provider local --model qwen3.5-9b
+
+# 在线 API（OpenRouter 等）
+python -m lmpsmart llm setup --provider online \
+    --base-url https://openrouter.ai/api/v1 \
+    --api-key sk-or-xxxxx --model anthropic/claude-3-haiku
+
+# 查看配置
+python -m lmpsmart llm show
+
+# 测试连接
+python -m lmpsmart llm test
 ```
 
-### Dependencies
+配置文件位于 `configs/llm.yaml`。
 
-Core (required):
-```
-numpy, pandas, scipy, statsmodels, pyyaml, pydantic, openpyxl, chardet
-```
+---
 
-Optional (for all smoothers):
-```
-pykalman     # adaptive_kalman smoother
-pywavelets   # wavelet smoother
-matplotlib   # plotting
-```
+## 9. 故障排查
 
-## Project Structure
+| 问题 | 解决方案 |
+|------|---------|
+| `ModuleNotFoundError: No module named 'lmpsmart'` | `pip install -e .` |
+| `YAML parsing error (NO, ON, NC)` | 已在 default.yaml 中引用处理 |
+| `adaptive_kalman unavailable` | `pip install pykalman` |
+| `MCP server 连接失败` | 检查 Python 路径是否正确 |
+| `UTF-8 decode error` | 使用 `--encoding GBK` |
+
+---
+
+## 10. 完整文件结构
 
 ```
 lmpsmart/
 ├── configs/
-│   └── default.yaml       ← All configuration (30 bond types, glob patterns, plot params)
+│   ├── default.yaml       ← 全量配置（30种键类型、绘图参数等）
+│   └── llm.yaml          ← LLM 配置
 ├── src/lmpsmart/
 │   ├── arrange/
-│   │   ├── config.py     ← Pydantic YAML config loader
-│   │   └── readers.py    ← 8 file parsers + arrange() main function
+│   │   ├── config.py     ← Pydantic 配置加载
+│   │   └── readers.py    ← 8种文件解析器 + arrange()
 │   ├── mapping/
-│   │   ├── smooth.py     ← 9 smoothing algorithms
-│   │   └── filter.py     ← 3 outlier filters (zscore, MAD, IQR)
+│   │   ├── smooth.py     ← 9种平滑算法
+│   │   ├── filter.py     ← 3种异常值过滤
+│   │   ├── plot.py       ← 基础绘图（line, scatter）
+│   │   ├── advanced_plot.py ← 高级绘图（boxplot, violin, surface, contour, heatmap）
+│   │   └── animation.py  ← 4种动图模式
 │   ├── core/
-│   │   └── tools.py      ← Element tables, encoding detection, utils
+│   │   └── tools.py      ← 元素表、编码检测等工具
 │   └── api/
-│       ├── agent.py       ← LmpparseAgent (plan + execute)
-│       ├── tools.py       ← 18 tool wrappers
-│       └── logging.py     ← ExecutionLogger (JSONL traceability)
+│       ├── agent.py       ← LmpparseAgent（规划 + 执行）
+│       ├── tools.py       ← 25个工具包装器
+│       ├── mcp_server.py  ← MCP Server（stdio/HTTP）
+│       └── logging.py     ← JSONL 执行日志
+├── scripts/
+│   └── mcp_run.py        ← MCP 启动器（读取配置）
+├── logs/                  ← 执行日志目录
+├── output/
+│   ├── arrange/          ← 解析结果 CSV
+│   └── plot/            ← 绘图结果 PNG/GIF
 ├── docs/
-│   └── REPORT.md         ← Technical report
-├── DEPLOYMENT.md         ← This file
+│   ├── REPORT.md         ← 技术报告
+│   └── video_script.md  ← 演示视频脚本
 ├── README.md
+├── DEPLOYMENT.md
 └── pyproject.toml
 ```
-
-## CLI Full Reference
-
-### arrange — Parse LAMMPS files
-
-```bash
-python -m lmpsmart arrange --path ./data --modes Log,Bonds,Dump
-```
-
-| Option        | Required | Description                              |
-|---------------|----------|------------------------------------------|
-| `--path`      | Yes      | Input directory                          |
-| `--modes`     | Yes      | Comma-separated: Log,Bonds,Dump,Cell,Species,POS,OVITO,General |
-| `--config`    | No       | YAML config path (default: configs/default.yaml) |
-| `--timestep`  | No       | Time step in fs (default: 0.1)           |
-| `--encoding`  | No       | File encoding (default: utf-8)            |
-| `--ignored-time` | No    | Ignore first N ps (default: 0.0)          |
-
-Output: `dataoflog.csv`, `dataofbonds.0.csv`, etc.
-
-### smooth — Smooth time-series data
-
-```bash
-python -m lmpsmart smooth --data "[1,2,3,2,1,2,3,2,1]" --method moving_avg
-python -m lmpsmart smooth --data values.csv --method savgol --output smoothed.csv
-```
-
-| Option     | Required | Description                        |
-|------------|----------|------------------------------------|
-| `--data`   | Yes      | JSON list or CSV file path          |
-| `--method` | No       | One of: moving_avg, savgol, ewma, segment_spline, adaptive_kalman, physics_constrained, robust_lowess, dynamic_wavelet, wavelet (default: moving_avg) |
-| `--output` | No       | Output CSV path                     |
-
-### filter — Remove outliers
-
-```bash
-python -m lmpsmart filter --csv data.csv --value-col temperature --methods zscore --threshold 3.0
-```
-
-| Option        | Required | Description                              |
-|---------------|----------|------------------------------------------|
-| `--csv`       | Yes      | Input CSV file                           |
-| `--time-col`  | No       | Time column name (default: time)          |
-| `--value-col` | Yes      | Column to filter                         |
-| `--methods`   | No       | zscore,mad,iqr or comma-combination      |
-| `--threshold` | No       | Threshold value (default: 3.0)            |
-| `--output`    | No       | Output CSV path                          |
-
-### config — Show configuration
-
-```bash
-python -m lmpsmart config --show
-```
-
-### agent — Autonomous goal execution
-
-```bash
-python -m lmpsmart agent --goal "arrange log files and smooth temperature"
-python -m lmpsmart agent --goal "arrange bonds and filter outliers with zscore" --dry-run
-```
-
-| Option       | Required | Description                          |
-|--------------|----------|--------------------------------------|
-| `--goal`     | Yes      | Natural language goal                 |
-| `--dry-run`  | No       | Show plan without executing           |
-| `--no-llm`   | No       | Use keyword matching instead of LLM   |
-
-## LLM Configuration
-
-Configure the LLM provider (local Ollama or online OpenAI-compatible API):
-
-```bash
-# Show current config
-python -m lmpsmart llm show
-
-# List available models
-python -m lmpsmart llm list
-
-# Test connection
-python -m lmpsmart llm test
-
-# Setup local Ollama (default)
-python -m lmpsmart llm setup --provider local --base-url http://localhost:11434 --model qwen3.5-9b
-
-# Setup online API (OpenRouter, OpenAI, etc.)
-python -m lmpsmart llm setup --provider online \
-    --base-url https://openrouter.ai/api/v1 \
-    --api-key sk-or-xxxxx \
-    --model anthropic/claude-3-haiku
-```
-
-Config file: `configs/llm.yaml`
-
-```yaml
-provider: local           # local | online
-base_url: http://localhost:11434
-api_key: ""              # required for online provider
-default_model: qwen3.5-9b
-timeout: 120
-task_models:             # optional per-task model override
-  plan: qwen3.5-9b         # task decomposition
-  chat: qwen3.5-9b         # conversation mode
-  coding: qwen3.5-9b       # code generation
-```
-
-When Ollama is unavailable, Agent falls back to keyword matching automatically.
-
-## Configuration
-
-Edit `configs/default.yaml`:
-
-```yaml
-# Bond types for ReaxFF analysis (30 types)
-cutoff:
-  bonds:
-    - CC; - CN; - CO; - CH; - NN; - NO; - NH; ...
-
-# Input file glob patterns
-filerule1:
-  logfilename: "log.lammps*"
-  bondsfilename: "bonds.reax.bof"
-  dumpfilename: "*.trj"
-
-# Visualization
-plotset:
-  multifig:
-    width: 14; high: 6; dpi: 600
-```
-
-## Reproducibility
-
-Execution logs in `logs/agent_session_{session_id}.jsonl`:
-
-```json
-{
-  "log_id": "abc123",
-  "timestamp": "2026-05-27T23:00:00",
-  "session_id": "s1a2b3",
-  "tool": "arrange",
-  "input": {"modes": ["Log", "Bonds"]},
-  "execution_steps": ["arrange: modes=['Log', 'Bonds'], path=./data"],
-  "output_summary": {"shape": [100, 20]},
-  "status": "success"
-}
-```
-
-To replay a session:
-```python
-from lmpsmart.api.logging import ExecutionLogger
-logger = ExecutionLogger("logs")
-summary = logger.summary()
-```
-
-## Troubleshooting
-
-**ModuleNotFoundError: No module named 'lmpsmart'**
-→ Run `pip install -e .` from project root
-
-**YAML parsing error with bond types (NO, ON, NC)**
-→ Already fixed: these are quoted in default.yaml
-
-**adaptive_kalman / wavelet smoother unavailable**
-→ Install optional deps: `pip install pykalman pywavelets`
-
-**UTF-8 decode error**
-→ Use `--encoding GBK` for Chinese Windows systems

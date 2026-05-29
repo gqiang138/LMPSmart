@@ -1,0 +1,4 @@
+timestep = 0.25
+thermostep = 30
+supercella, supercellb, supercellc = 1,1,1
+elementorder = {'Al':0,'C':1,'H':2,'N':3,'O':4}

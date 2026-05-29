@@ -1,0 +1,252 @@
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+30          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+60          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+90          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+120          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+150          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+180          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+210          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+240          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+270          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+300          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+330          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+360          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+390          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+420          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+450          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+480          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+510          9          3	 1	 4	 4	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+540          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	
+570          5          1	 5	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+600          7          3	 2	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O2N4	O2N	H6C3O4N5	
+630          8          4	 3	 1	 3	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	H6C3O2N4	
+660          8          4	 3	 1	 3	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+690          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+720          8          3	 2	 3	 3	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+750          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+780          6          3	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+810          7          3	 2	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+840          7          3	 3	 2	 2	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+870          9          3	 1	 4	 4	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	H6C3O2N4	
+900          9          4	 2	 2	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+930          7          3	 3	 2	 2	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+960          8          3	 2	 3	 3	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+990          9          3	 1	 4	 4	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+1020          7          3	 3	 2	 2	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+1050          8          3	 2	 3	 3	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+1080          7          3	 3	 2	 2	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+1110          8          3	 2	 3	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1140          8          3	 3	 3	 2	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+1170          7          3	 3	 2	 2	
+# Timestep     No_Moles     No_Specs     H6C3O6N6	H6C3O4N5	O2N	
+1200          7          3	 3	 2	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1230          8          3	 3	 3	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1260          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	
+1290         10          2	 5	 5	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1320          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1350          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1380          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1410          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1440          8          3	 3	 3	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H6C3O6N6	
+1470          9          4	 2	 4	 1	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1500          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1530          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	
+1560          9          3	 4	 4	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	
+1590         10          2	 5	 5	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	
+1620         10          2	 5	 5	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H6C3O2N4	
+1650         10          4	 3	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H6C3O2N4	
+1680         10          4	 3	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H6C3O2N4	
+1710         10          4	 3	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H6C3O2N4	
+1740         11          4	 2	 6	 1	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H6C3O2N4	
+1770         10          4	 3	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H6C3O4N5	
+1800         12          3	 2	 7	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	
+1830         11          3	 4	 6	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H6C3O2N4	
+1860         10          4	 3	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H6C3O2N4	
+1890         12          5	 3	 6	 1	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H6C3O2N4	
+1920         12          5	 3	 6	 1	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O6N6	H4C2O2N3	H2CO2N2	H6C3O2N4	
+1950         11          6	 2	 5	 1	 1	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H6C3O4N5	H6C3O6N6	H4C2O2N3	H2CO2N2	
+1980         12          6	 2	 6	 1	 1	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H4C2O2N3	H2CN	
+2010         16          4	 4	 10	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2O2N3	H2CO2N2	
+2040         13          5	 2	 7	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2O2N3	H2CO2N2	
+2070         13          5	 2	 7	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2O2N3	H2CO2N2	
+2100         13          5	 2	 7	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2O2N3	H2CO2N2	
+2130         13          5	 2	 7	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2N2	H2CO2N2	
+2160         14          5	 2	 8	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2N2	H2CO2N2	
+2190         14          5	 2	 8	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2N2	H2CO2N2	
+2220         14          5	 2	 8	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2N2	H2CN	
+2250         15          5	 2	 9	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H4C2N2	H2CO2N2	
+2280         14          5	 2	 8	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	
+2310         16          4	 2	 9	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	
+2340         16          4	 2	 9	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3N3	H2CN	H6C3O2N4	
+2370         17          5	 2	 10	 1	 3	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3N3	H2CN	H2CO2N2	H6C3O2N4	
+2400         16          6	 2	 9	 1	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3N3	H2CN	H2CO2N2	H6C3O2N4	
+2430         16          6	 2	 9	 1	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H6C3O4N5	H6C3N3	H2CN	
+2460         18          5	 2	 11	 1	 1	 3	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H6C3N3	H2CN	H2CO2N2	
+2490         18          5	 3	 11	 1	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H6C3N3	H2CN	H2CO2N2	
+2520         17          6	 1	 10	 2	 1	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3N3	H2CN	H6C3O2N4	
+2550         17          5	 2	 10	 1	 3	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3N3	H2CN	H2CO2N2	H6C3O2N4	
+2580         16          6	 2	 9	 1	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	
+2610         16          4	 2	 9	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	H2CO2N2	
+2640         15          5	 2	 8	 2	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H6C3O4N5	H2CN	H2CO2N2	
+2670         16          5	 3	 9	 1	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	
+2700         16          4	 2	 9	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	H2CO2N2	
+2730         15          5	 2	 8	 2	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H6C3O2N4	H2CN	H2CO2N2	
+2760         15          5	 2	 8	 2	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O2N4	O2N	H6C3O4N5	H2CN	
+2790         17          4	 3	 10	 1	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H6C3O2N4	H2CN	
+2820         17          6	 1	 9	 1	 1	 2	 3	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H6C3N3	H2CN	H6C3O2N4	
+2850         18          7	 1	 10	 1	 1	 1	 3	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CN	H6C3O2N4	
+2880         18          5	 1	 10	 1	 4	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CN	H6C3O2N4	
+2910         18          5	 1	 10	 1	 4	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CN	H6C3O2N4	
+2940         18          5	 1	 10	 1	 4	 2	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H2CN	H4C2N2	H6C3O2N4	
+2970         19          7	 1	 10	 1	 1	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H4C2N2	H2CN	H6C3O2N4	
+3000         17          7	 1	 8	 1	 3	 1	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H2CN	H2CO2N2	H4C2N2	H6C3O2N4	
+3030         19          6	 1	 9	 4	 3	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CO2N2	H4C2N2	H2CN	H6C3O2N4	
+3060         17          7	 1	 8	 1	 3	 1	 2	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CN	H2CO2N2	H4C2N2	H6C3O2N4	
+3090         18          7	 1	 9	 1	 3	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H6C3O4N5	O2N	H4C2O2N3	H2CN	H2CO2N2	H4C2N2	H6C3O2N4	
+3120         18          7	 1	 9	 1	 3	 2	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3150         19          6	 2	 3	 9	 3	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3180         21          6	 1	 3	 10	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2N2	H2CO2N2	O2N	H4C2O2N3	H2CN	H6C3O2N4	
+3210         21          6	 2	 2	 11	 1	 4	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3240         21          6	 1	 3	 10	 5	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3270         20          6	 1	 4	 9	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3300         22          5	 4	 6	 10	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2O2N3	H4C2N2	H6C3O2N4	
+3330         20          6	 4	 4	 9	 1	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3360         19          6	 1	 5	 8	 3	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3390         20          6	 1	 4	 9	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CO2N2	O2N	H2CN	H4C2N2	H6C3O2N4	
+3420         20          6	 1	 4	 9	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CN	O2N	H2CO2N2	H4C2N2	H6C3O2N4	
+3450         21          6	 1	 5	 10	 3	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CN	O2N	H2CO2N2	H4C2N2	H6C3O2N4	
+3480         20          6	 1	 4	 9	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H4C2O2N3	H2CN	O2N	H2CO2N2	H4C2N2	H6C3O2N4	
+3510         20          6	 1	 4	 9	 4	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3540         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3570         22          5	 4	 6	 10	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3600         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3630         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3660         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3690         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3720         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3750         21          5	 5	 5	 9	 1	 1	
+# Timestep     No_Moles     No_Specs     H2CO2N2	H2CN	O2N	H4C2N2	H6C3O2N4	
+3780         21          5	 5	 5	 9	 1	 1	

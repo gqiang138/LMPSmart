@@ -1,9 +1,13 @@
 provider: local
-base_url: http://localhost:11434
+base_url: http://10.103.8.240:11434
 api_key: sk-or-test
-default_model: qwen3:8b
+default_model: qwen3.5-9b:latest
 timeout: 120
 task_models:
-  plan: qwen3:8b
-  chat: qwen3:8b
+  plan: qwen3.5-9b:latest
+  chat: qwen3.5-9b:latest
   coding: qwen3:8b
+# Python environment for MCP server (used by scripts/mcp_run.py)
+python_path: E:/Program/anaconda3/envs/lmpsmart/python.exe
+# Project root (used by scripts/mcp_run.py)
+project_root: D:/MyObsidian/Projects/lmpsmart

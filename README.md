@@ -1,44 +1,51 @@
-# lmpsmart — LAMMPS Data Agent
+# LMPSmart v1.0 — LAMMPS Data Agent
+
+[![GitHub](https://img.shields.io/badge/GitHub-gqiang138/LMPSmart-brightgreen)](https://github.com/gqiang138/LMPSmart)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue)](https://opensource.org/licenses/GPL-3.0)
+[![Python](https://img.shields.io/badge/Python-3.10+-yellow)](https://www.python.org/)
+[![MCP](https://img.shields.io/badge/MCP-25%20tools-6AB04A)](https://modelcontextprotocol.io)
+
+**GitHub**: https://github.com/gqiang138/LMPSmart
 
 LAMMPS molecular dynamics simulation data processing tool with autonomous Agent architecture.
-Parses 8 file formats, standardizes LAMMPS non-standard data into 8 original structured outputs, smooths signals, filters outliers, computes metrics — all driven by YAML config.
+Parses 8 file formats, standardizes LAMMPS non-standard data into 8 original structured outputs,
+smooths signals, filters outliers, computes metrics — all driven by YAML config.
 
-## Features
+## Key Features
 
-- **8 file parsers**: Log, Bonds, Dump, Cell, Species, POS, OVITO, General
-- **8 original standardized outputs**: Bonds (bocutoff/blcutoff thresholds), Cell (Lx/Ly/Lz/Volume from Dump), Atom (id→element mapping), Species/POS (molecular weight), OVITO multi-frame integration
-- **9 smoothing algorithms + curve fitting**: segment_spline, adaptive_kalman, physics_constrained, robust_lowess, dynamic_wavelet, moving_avg, savgol, wavelet, ewma; polyfit.n polynomial fitting; LOWESS local regression
-- **3 outlier filters**: zscore, MAD, IQR
-- **Config-driven** (YAML): no hardcoding, all parameters in `configs/default.yaml`
-- **Glob batch matching**: process multiple files simultaneously with split naming
-- **Agent architecture**: natural language goal → LLM-first plan → tool chain (falls back to keyword matching)
-- **Multi-provider LLM**: local Ollama / online OpenAI-compatible API, config-driven
-- **Execution logger**: full traceability (JSONL) for reproducibility
-
-## Installation
-
-```bash
-# Smart installer (auto-detects env, offers LLM config)
-python install.py
-
-# Or manual
-pip install -e .
-```
+| Category | Count | Details |
+|---|---|---|
+| File Parsers | 8 | Log, Bonds, Dump, Cell, Species, POS, OVITO, General |
+| Standardized Outputs | 8 | Bocutoff/blcutoff, Cell dimensions, Atom mapping, Molecular weight |
+| Smoothing Algorithms | 9 | segment_spline, adaptive_kalman, physics_constrained, robust_lowess, dynamic_wavelet, moving_avg, savgol, wavelet, ewma |
+| Curve Fitting | 2 | polyfit.n polynomial, LOWESS local regression |
+| Outlier Filters | 3 | zscore, MAD, IQR |
+| Plot Types | 7 | line, scatter, boxplot, violin, surface (3D), contour, heatmap |
+| Animation Modes | 4 | isograph, bar, line, reacdraw (3D bond animation) |
+| MCP Tools | 25 | Full tool suite exposed via Model Context Protocol |
 
 ## Quick Start
 
 ```bash
-# Direct CLI (from src/)
-python src/lmpsmart/__main__.py config --show
-python src/lmpsmart/__main__.py arrange --path ./data --modes Log,Bonds,Dump
-python src/lmpsmart/__main__.py agent --goal "arrange log files and smooth temperature"
+# Install
+git clone https://github.com/gqiang138/LMPSmart
+cd lmpsmart
+pip install -e .
+
+# CLI
+python -m lmpsmart arrange --path ./data --modes Log,Bonds,Dump
+python -m lmpsmart agent --goal "plot energy vs time from output/arrange/dataoflog.csv"
+
+# MCP (stdio — OpenCode, Claude Desktop)
+python -m lmpsmart.api.mcp_server
+
+# MCP (HTTP — Cherry Studio, remote)
+python -m lmpsmart.api.mcp_server --http --port 8765
 
 # Python API
-python -m lmpsmart config --show  # after pip install -e .
-
-from lmpsmart import arrange, smooth, filter_outliers
+python -m lmpsmart config --show
+from lmpsmart import arrange, smooth
 df = arrange("data/", modes=["Log", "Bonds"])
-smoothed = smooth(df["temperature"], method="moving_avg")
 ```
 
 ## Architecture
@@ -46,70 +53,51 @@ smoothed = smooth(df["temperature"], method="moving_avg")
 ```
 Input files (LAMMPS)
        ↓
-  Arrange Layer        ← 8 parsers + 8 original standardized outputs + glob batch + YAML config
+   Arrange Layer         ← 8 parsers + 8 standardized outputs + glob batch + YAML config
        ↓
-   DataFrame
+    DataFrame
        ↓
-  Mapping Layer       ← 9 smoothers + curve fitting + 3 filters + metrics (RMSD/CED/mweight)
+   Mapping Layer         ← 9 smoothers + curve fitting + 3 filters + 7 plots + 4 animations
        ↓
-   Output files
+    Output files
        ↑
-  Agent Controller     ← plan_from_goal() → execute()
+   Agent Controller      ← plan_from_goal() → execute()
 ```
 
-## Supported File Formats
-
-| Format   | Description                          | Parser             |
-|----------|--------------------------------------|--------------------|
-| Log      | LAMMPS thermodynamic output          | `read_log()`       |
-| Bonds    | Bond order analysis (ReaxFF)         | `read_bonds()`     |
-| Dump     | Atomic trajectory (positions/velocities)| `read_dump()`     |
-| Cell     | Unit cell dimensions                 | `read_cell()`      |
-| Species  | Chemical species counts              | `read_species()`   |
-| POS      | POSCAR-style crystal files           | `read_pos()`       |
-| OVITO    | OVITO export format                 | `read_ovito()`     |
-| General  | Auto-detected CSV/TSV               | `read_general()`    |
-
-## Configuration
-
-All parameters in `configs/default.yaml`:
-
-- `cutoff`: 30 bond types + bond order cutoffs + bond length cutoffs
-- `filerule1`: input glob patterns for 8 file types
-- `filerule2`: output naming rules
-- `plotset`: matplotlib figure parameters
-- `bonds_limit`: per-element bond count limits
-- `timestep`, `thermostep`, `ignoredtime`, `supercell`
-
-## Agent Tools (18 total)
+## Agent Tools (25 total)
 
 ```
 arrange, load_config,
 read_log, read_bonds, read_dump, read_data,
 read_cell, read_species, read_pos, read_general,
-smooth, filter_outliers,
+smooth, filter_outliers, fit, plot, animation,
+groupby_aggregate, belong_filter, column_rename,
+select_columns, merge_data,
 molecular_weight, find_elements, atom_type,
 detect_encoding, autocode
 ```
 
-### LLM Agent (Fully Integrated)
+## MCP Integration
 
-Agent 默认启用 LLM 推理（Ollama 本地或在线 API），关键词匹配作为降级备选。
+lmpsmart exposes all 25 tools via MCP. Connect any MCP-compatible host:
+
+- **OpenCode**: `opencode mcp add lmpsmart <python> -m lmpsmart.api.mcp_server`
+- **Cherry Studio**: HTTP transport on port 8765
+- **Claude Desktop**: `claude_desktop_config.json` entry
+
+The host's LLM handles planning; lmpsmart handles execution only.
+
+## Examples
+
+RDX molecular dynamics simulation data — see `output/`:
+
+| Directory | Contents |
+|-----------|----------|
+| `output/arrange/` | 6 CSV files parsed from RDX simulation |
+| `output/plot/` | 10 PNG plots from parsed data |
 
 ```bash
-# Agent 默认调用 LLM（自动检测可用性）
-python -m lmpsmart agent --goal "平滑温度曲线，去除异常值"
-
-# 配置 Ollama 本地模型（默认）
-python -m lmpsmart llm setup --provider local --model qwen3.5-9b
-
-# 配置在线 API（OpenRouter 等 OpenAI 兼容接口）
-python -m lmpsmart llm setup --provider online \
-    --base-url https://openrouter.ai/api/v1 \
-    --api-key sk-or-xxxxx --model anthropic/claude-3-haiku
-
-# 强制使用关键词匹配（无 LLM 环境）
-python -m lmpsmart agent --goal "arrange log" --no-llm
+python -m lmpsmart arrange --path ./data/RDX --modes Log,Bonds,Dump,Cell,Species,POS
 ```
 
 ## Reproducibility
@@ -117,9 +105,19 @@ python -m lmpsmart agent --goal "arrange log" --no-llm
 Every tool call is logged to `logs/agent_session_{session_id}.jsonl`:
 
 ```json
-{"log_id": "a1b2c3d4e5f6", "timestamp": "...", "session_id": "...", "tool": "arrange",
- "input": {...}, "execution_steps": [...], "output_summary": {...}, "status": "success"}
+{"log_id": "a1b2c3d4e5f6", "timestamp": "...",
+ "tool": "arrange", "input": {"modes": ["Log"]},
+ "execution_steps": ["arrange: modes=['Log'], path=./data"],
+ "output_summary": {"shape": [100, 20]},
+ "status": "success", "elapsed_ms": 234}
 ```
+
+## Requirements
+
+- Python >= 3.10
+- Core: numpy, pandas, scipy, statsmodels, pyyaml, pydantic, openpyxl, chardet
+- Visualization: matplotlib, pillow (for animation GIF output)
+- Optional: pykalman (adaptive_kalman), pywavelets (wavelet smoother), mcp (MCP server)
 
 ## License
 

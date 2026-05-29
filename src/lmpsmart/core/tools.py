@@ -13,10 +13,12 @@ import pandas as pd
 
 ELEMENT_WEIGHT = {
     1: "H", 2: "He",
-    6: "C", 7: "N", 8: "O", 9: "F",
-    13: "Al", 14: "Si", 16: "S",
-    26: "Fe", 29: "Cu",
-    27: "Co", 30: "Zn", 40: "Zr",
+    4: "Be", 5: "B", 6: "C", 7: "N", 8: "O", 9: "F", 10: "Ne",
+    11: "Na", 12: "Mg", 13: "Al", 14: "Si", 15: "P", 16: "S", 17: "Cl",
+    18: "Ar", 19: "K", 20: "Ca", 22: "Ti", 23: "V", 24: "Cr", 25: "Mn",
+    26: "Fe", 27: "Co", 28: "Ni", 29: "Cu", 30: "Zn", 32: "Ge", 33: "As",
+    34: "Se", 35: "Br", 40: "Zr", 47: "Ag", 50: "Sn", 51: "Sb", 53: "I",
+    55: "Cs", 56: "Ba", 64: "Gd", 79: "Au", 80: "Hg", 82: "Pb",
 }
 
 ELEMENT_ATOMIC = {
@@ -28,19 +30,29 @@ ELEMENT_ATOMIC = {
 }
 
 ELEMENT_MASS = {
-    "H": 1.008, "C": 12.011, "N": 14.007, "O": 15.999,
-    "F": 18.998, "Al": 26.982, "Si": 28.086, "S": 32.065,
-    "Fe": 55.845, "Cu": 63.546, "Co": 58.933, "Zn": 65.38,
-    "Zr": 91.224,
+    "H": 1.008, "He": 4.003, "Li": 6.941, "Be": 9.012, "B": 10.81, "C": 12.011,
+    "N": 14.007, "O": 15.999, "F": 18.998, "Ne": 20.180, "Na": 22.990, "Mg": 24.305,
+    "Al": 26.982, "Si": 28.086, "P": 30.974, "S": 32.065, "Cl": 35.453, "Ar": 39.948,
+    "K": 39.098, "Ca": 40.078, "Ti": 47.867, "V": 50.942, "Cr": 51.996, "Mn": 54.938,
+    "Fe": 55.845, "Co": 58.933, "Ni": 58.693, "Cu": 63.546, "Zn": 65.38, "Ge": 72.630,
+    "As": 74.922, "Se": 78.971, "Br": 79.904, "Kr": 83.798, "Rb": 85.468, "Sr": 87.62,
+    "Zr": 91.224, "Ag": 107.868, "Sn": 118.710, "Sb": 121.760, "I": 126.904, "Cs": 132.905,
+    "Ba": 137.327, "Gd": 157.250, "Au": 196.967, "Hg": 200.592, "Pb": 207.200,
 }
+
+_SUB = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+_NORM = str.maketrans("₀₁₂₃₄₅₆₇₈₉²³⁰⁴⁵⁶⁷⁸⁹", "0123456789223456789")
+
+
+def compound2sub(formula: str) -> str:
+    return formula.translate(_SUB)
 
 
 def atom_type(mass_value: float) -> str:
-    num = round(mass_value, 0)
-    if num in ELEMENT_WEIGHT:
-        return ELEMENT_WEIGHT[num]
-    closest = min(ELEMENT_WEIGHT.keys(), key=lambda x: abs(x - mass_value))
-    return ELEMENT_WEIGHT[closest]
+    if not ELEMENT_MASS:
+        return "Unknown"
+    closest = min(ELEMENT_MASS.keys(), key=lambda e: abs(ELEMENT_MASS[e] - mass_value))
+    return closest
 
 
 def atom_order(element: str) -> int:
@@ -56,18 +68,23 @@ def find_elements(input_string: str) -> list[str]:
     return pattern.findall(input_string)
 
 
+def reorder_molecule(formula: str, rule: dict[str, int]) -> str:
+    try:
+        parts = re.findall(r"([A-Z][a-z]?)(\d*)", formula)
+        reordered = sorted(parts, key=lambda x: rule.get(x[0], 999))
+        return "".join(e + (c if c else "") for e, c in reordered)
+    except (TypeError, KeyError, ValueError):
+        return formula
+
+
 def molecular_weight(formula: str) -> float:
-    table = str.maketrans(
-        "₀₁₂₃₄₅₆₇₈₉²³⁰⁴⁵⁶⁷⁸⁹",
-        "0123456789223456789",
-    )
-    formula = formula.translate(table)
+    formula = formula.translate(_NORM)
     elements = re.findall(r"([A-Z][a-z]?)(\d*)", formula)
     total = 0.0
     for element, count in elements:
         mass = ELEMENT_MASS.get(element, 0.0)
         total += mass * (int(count) if count else 1)
-    return total
+    return round(total, 3)
 
 
 def merge_list(my_list: list, order: int = 1) -> list:

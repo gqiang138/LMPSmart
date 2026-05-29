@@ -1,0 +1,9 @@
+{
+  "python_path": "E:\\Program\\anaconda3\\envs\\lmpsmart\\python.exe",
+  "mirror_url": "https://pypi.tuna.tsinghua.edu.cn/simple",
+  "env_name": "lmpsmart",
+  "env_kind": "existing",
+  "llm_configured": true,
+  "version": 1,
+  "timestamp": "2026-05-29T17:23:15.195178"
+}

@@ -39,6 +39,7 @@ class PlotSetSingle(BaseModel):
     subadjust_hspace: float = 0.2
     sns_style: str = "ticks"
     palette: str = "tab10"
+    font_family: str = "Times New Roman"
 
 
 class PlotSetDoubleY(BaseModel):
@@ -50,20 +51,40 @@ class PlotSetDoubleY(BaseModel):
     fontscale: float = 1.5
     sns_style: str = "ticks"
     palette: str = "tab10"
+    font_family: str = "Times New Roman"
     y1color: str = "black"
     y2color: str = "red"
     y2tickcolor: str = "red"
     y2labelcolor: str = "red"
 
 
+class PlotSetAnimation(BaseModel):
+    width: int = 12
+    high: int = 8
+    dpi: int = 100
+    labelsize: int = 16
+    ticksize: int = 14
+    fontscale: float = 1.3
+    subadjust_wspace: float = 0.2
+    subadjust_hspace: float = 0.2
+    sns_style: str = "ticks"
+    palette: str = "tab10"
+    font_family: str = "Times New Roman"
+    default_interval: int = 200
+    default_cmap: str = "rainbow"
+    default_format: str = "gif"
+
+
 class PlotSet(BaseModel):
     multifig: PlotSetSingle = Field(default_factory=PlotSetSingle)
     singlescale: PlotSetSingle = Field(default_factory=PlotSetSingle)
     doubleyscale: PlotSetDoubleY = Field(default_factory=PlotSetDoubleY)
+    animationscale: PlotSetAnimation = Field(default_factory=PlotSetAnimation)
     sns_style: str = "ticks"
     palette: str = "tab10"
+    font_family: str = "Times New Roman"
 
-    def get_mode(self, mode: str) -> PlotSetSingle | PlotSetDoubleY:
+    def get_mode(self, mode: str) -> PlotSetSingle | PlotSetDoubleY | PlotSetAnimation:
         return getattr(self, mode, self.multifig)
 
 
@@ -105,6 +126,7 @@ class Config(BaseModel):
                 subadjust_hspace=d.get("subadjust", {}).get("hspace", 0.2),
                 sns_style=d.get("sns_style", global_sns),
                 palette=d.get("palette", global_pal),
+                font_family=d.get("font_family", ps_data.get("font_family", "Times New Roman")),
             )
 
         def _ps_double_from_dict(d: dict) -> PlotSetDoubleY:
@@ -123,16 +145,37 @@ class Config(BaseModel):
                 y2labelcolor=d.get("y2labelcolor", "red"),
             )
 
+        def _ps_ani_from_dict(d: dict) -> PlotSetAnimation:
+            return PlotSetAnimation(
+                width=d.get("width", 12),
+                high=d.get("high", 8),
+                dpi=d.get("dpi", 100),
+                labelsize=d.get("labelsize", 16),
+                ticksize=d.get("ticksize", 14),
+                fontscale=d.get("fontscale", 1.3),
+                subadjust_wspace=d.get("subadjust", {}).get("wspace", 0.2),
+                subadjust_hspace=d.get("subadjust", {}).get("hspace", 0.2),
+                sns_style=d.get("sns_style", global_sns),
+                palette=d.get("palette", global_pal),
+                font_family=d.get("font_family", "Times New Roman"),
+                default_interval=d.get("default_interval", 200),
+                default_cmap=d.get("default_cmap", "rainbow"),
+                default_format=d.get("default_format", "gif"),
+            )
+
         multifig_data = ps_data.get("multifig", {})
         singlescale_data = ps_data.get("singlescale", {})
         doubleyscale_data = ps_data.get("doubleyscale", {})
+        animationscale_data = ps_data.get("animationscale", {})
 
         plotset = PlotSet(
             multifig=_ps_from_dict(multifig_data),
             singlescale=_ps_from_dict(singlescale_data),
             doubleyscale=_ps_double_from_dict(doubleyscale_data),
+            animationscale=_ps_ani_from_dict(animationscale_data),
             sns_style=global_sns,
             palette=global_pal,
+            font_family=ps_data.get("font_family", "serif"),
         )
 
         return cls(

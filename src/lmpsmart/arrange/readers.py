@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """LAMMPS file readers for Arrange module."""
 from __future__ import annotations
+import gc
 import re
 import os
 import glob
@@ -11,6 +12,7 @@ from typing import Literal, Any
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
+from lmpsmart.core.tools import atom_type as identify_element
 
 
 def detect_encoding(file_path: str) -> str:
@@ -48,7 +50,13 @@ def df_atoms(data_path: str) -> list[dict]:
             parts = stripped.split()
             if len(parts) >= 4:
                 atom_id = int(parts[0])
-                if len(parts) == 6:
+                if len(parts) == 4:
+                    atom_type = int(parts[1])
+                    x, y, z = float(parts[2]), float(parts[3]), 0.0
+                    atoms_data.append(
+                        {"id": atom_id, "molecule": 0, "type": atom_type, "x": x, "y": y, "z": z}
+                    )
+                elif len(parts) == 6:
                     atom_type = int(parts[1])
                     x, y, z = float(parts[3]), float(parts[4]), float(parts[5])
                     atoms_data.append(
@@ -57,7 +65,7 @@ def df_atoms(data_path: str) -> list[dict]:
                 else:
                     mol_id = int(parts[1])
                     atom_type = int(parts[2])
-                    x, y, z = float(parts[3]), float(parts[4]), float(parts[5])
+                    x, y, z = float(parts[4]), float(parts[5]), float(parts[6])
                     atoms_data.append(
                         {"id": atom_id, "molecule": mol_id, "type": atom_type, "x": x, "y": y, "z": z}
                     )
@@ -84,7 +92,7 @@ def df_masses(data_path: str) -> pd.DataFrame:
                 try:
                     atom_type = int(parts[0])
                     mass = float(parts[1])
-                    element = "X"
+                    element = identify_element(mass)
                     raw_line = line.strip()
                     if "#" in raw_line:
                         elem_part = raw_line.split("#", 1)[1].strip()
@@ -353,6 +361,7 @@ def read_species(
     ignored_time: float = 0.0,
     timestep: float = 0.1,
     encoding: str = "utf-8",
+    elementorder: dict | None = None,
 ) -> pd.DataFrame:
     with open(species_path, encoding=encoding) as f:
         lines = f.readlines()
@@ -407,7 +416,9 @@ def read_species(
     df.insert(1, "time", round(df["frame"] * timestep * 0.001, 3))
     # Original format: number (count per molecule), weight (molecular weight)
     df = df.rename(columns={"count": "number"})
-    from lmpsmart.core.tools import molecular_weight
+    from lmpsmart.core.tools import molecular_weight, reorder_molecule
+    if elementorder:
+        df["molecule"] = df["molecule"].apply(lambda m: reorder_molecule(m, elementorder))
     df["weight"] = df["molecule"].apply(molecular_weight)
     return df
 
@@ -417,6 +428,7 @@ def read_pos(
     ignored_time: float = 0.0,
     timestep: float = 0.1,
     encoding: str = "utf-8",
+    elementorder: dict | None = None,
 ) -> pd.DataFrame:
     with open(pos_path, encoding=encoding) as f:
         raw_lines = f.readlines()
@@ -499,7 +511,9 @@ def read_pos(
     dfpos["frame"] = dfpos["frame"].astype(int)
     dfpos.insert(1, "time", round(dfpos["frame"] * timestep * 0.001, 3))
     dfpos = dfpos.sort_values(["frame", "molecule"], ascending=[True, True]).reset_index(drop=True)
-    from lmpsmart.core.tools import molecular_weight
+    from lmpsmart.core.tools import molecular_weight, reorder_molecule
+    if elementorder:
+        dfpos["molecule"] = dfpos["molecule"].apply(lambda m: reorder_molecule(m, elementorder))
     dfpos["weight"] = dfpos["molecule"].apply(molecular_weight)
     cols = ["frame", "time", "molecule", "q", "x", "y", "z", "weight"]
     return dfpos[cols]
@@ -585,19 +599,38 @@ def arrange(
     encoding: str = "utf-8",
     supercell: tuple[int, int, int] | None = None,
     log_indices: list[int] | None = None,
-) -> dict[str, pd.DataFrame]:
+) -> tuple[dict[str, pd.DataFrame], str]:
     if config is None:
         from lmpsmart.arrange.config import load_config
         config = load_config()
 
     if output_path is None:
-        output_path = input_path
+        root = Path(input_path).resolve()
+        for parent in [root] + list(root.parents):
+            if parent.joinpath("src").exists() or parent.joinpath("sample").exists():
+                output_path = str(parent.joinpath("output", root.name))
+                break
+        else:
+            # User case: put arrange/ at the case folder level (input_path itself)
+            output_path = str(root.joinpath("arrange"))
+    elif output_path.endswith(".csv"):
+        _sp = Path(output_path)
+        _save_target = output_path
+        _save_dir = str(_sp.parent)
+        os.makedirs(_save_dir, exist_ok=True)
+        output_path = _save_dir
     os.makedirs(output_path, exist_ok=True)
 
     params = read_paraments(input_path)
     timestep = params.get("timestep", timestep)
     if supercell is None and "supercell" in params:
         supercell = params["supercell"]
+    elementorder = None
+    if "elementorder" in params:
+        try:
+            elementorder = eval(params["elementorder"])
+        except (NameError, SyntaxError, TypeError):
+            pass
 
     results = {}
     data_pattern = config.filerule1.datafilename
@@ -620,7 +653,13 @@ def arrange(
             name += f".{extra}"
         if suffix:
             name += f".{suffix}"
-        df.to_csv(os.path.join(output_path, f"{name}.csv"), encoding="utf-8-sig", index=False)
+        if "_save_target" in dir() and _save_target is not None and idx is None:
+            out_file = _save_target
+            _save_target = None
+        else:
+            out_file = os.path.join(output_path, f"{name}.csv")
+        df.to_csv(out_file, encoding="utf-8-sig", index=False)
+        gc.collect()
 
     for mode in modes:
         mode = mode.strip()
@@ -673,7 +712,7 @@ def arrange(
         elif mode == "Species":
             species_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.speciesfilename)))
             for n, sf in enumerate(species_files):
-                df_s = read_species(sf, ignored_time=ignored_time, timestep=timestep, encoding=encoding)
+                df_s = read_species(sf, ignored_time=ignored_time, timestep=timestep, encoding=encoding, elementorder=elementorder)
                 _save(df_s, "dataofspecies", None if len(species_files) == 1 else n)
                 if n == 0:
                     results["species"] = df_s
@@ -681,7 +720,7 @@ def arrange(
         elif mode == "POS":
             pos_files = sorted(glob.glob(os.path.join(input_path, config.filerule1.posfilename)))
             for n, pf in enumerate(pos_files):
-                df_p = read_pos(pf, ignored_time=ignored_time, timestep=timestep, encoding=encoding)
+                df_p = read_pos(pf, ignored_time=ignored_time, timestep=timestep, encoding=encoding, elementorder=elementorder)
                 _save(df_p, "dataofpos", None if len(pos_files) == 1 else n)
                 if n == 0:
                     results["pos"] = df_p
@@ -694,4 +733,4 @@ def arrange(
                 if n == 0:
                     results["ovito"] = df_o
 
-    return results
+    return results, output_path

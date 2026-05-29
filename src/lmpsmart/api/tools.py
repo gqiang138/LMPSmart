@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """18 Tool interfaces for lmpsmart Agent."""
 from __future__ import annotations
+import gc
 import os
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,18 @@ from lmpsmart.arrange.readers import (
 )
 from lmpsmart.mapping.smooth import smooth, AVAILABLE_METHODS
 from lmpsmart.mapping.filter import filter_outliers, filter_zscore, filter_mad, filter_iqr
+from lmpsmart.mapping.fit import fit as fit_data
+from lmpsmart.mapping.plot import plot_dataframe as tool_plot_dataframe
+from lmpsmart.mapping.advanced_plot import (
+    plot_boxplot as tool_plot_boxplot, plot_violin as tool_plot_violin,
+    plot_scatter as tool_plot_scatter, plot_surface as tool_plot_surface,
+    plot_contour as tool_plot_contour, plot_heatmap as tool_plot_heatmap,
+)
+from lmpsmart.mapping.animation import plot_animation as tool_plot_animation
+from lmpsmart.mapping.clean import (
+    groupby_aggregate, belong_filter,
+    column_rename, select_columns, merge_data,
+)
 from lmpsmart.core.tools import (
     ELEMENT_WEIGHT, ELEMENT_ATOMIC, ELEMENT_MASS,
     atom_type, atom_order, type_atom, find_elements,
@@ -55,13 +68,24 @@ def tool_arrange(
     steps = _step(f"arrange: modes={modes}, path={input_path}")
     cfg = load_config(config_path) if config_path else None
     try:
-        result = arrange(
+        result, out_dir = arrange(
             input_path=input_path, modes=modes, output_path=output_path,
             config=cfg, ignored_time=ignored_time, timestep=timestep,
             encoding=encoding, supercell=sc, log_indices=log_indices,
         )
+        gc.collect()
+        # Build CSV file paths from modes and output directory
+        prefix_map = {
+            "Log": "dataoflog", "Bonds": "dataofbonds", "Dump": "dataofdump",
+            "Cell": "dataofcell", "Species": "dataofspecies",
+            "POS": "dataofpos", "OVITO": "dataofovito", "General": "dataofgeneral",
+        }
+        csv_files = [
+            f"{out_dir}/{prefix_map.get(m, 'dataof' + m.lower())}.csv"
+            for m in modes
+        ]
         logger.log("arrange", {"input_path": input_path, "modes": modes}, steps, result, status="success")
-        return {"status": "success", "files": list(result.keys()), "outputs": result}
+        return {"status": "success", "output_dir": out_dir, "files": csv_files, "outputs": result}
     except Exception as e:
         logger.log("arrange", {"input_path": input_path, "modes": modes}, steps, None, [str(e)], "failed")
         raise
@@ -162,6 +186,304 @@ def tool_filter_outliers(df: pd.DataFrame, time_col: str, value_col: str,
     return result
 
 
+def tool_fit(
+    x_data: list[float] | pd.Series,
+    y_data: list[float] | pd.Series,
+    method: str = "polyfit",
+    degree: int = 2,
+    frac: float = 0.3,
+) -> dict:
+    steps = _step(f"fit: method={method}")
+    result = fit_data(x_data, y_data, method=method, degree=degree, frac=frac)
+    get_logger().log("fit", {"method": method, "degree": degree}, steps, result, status="success")
+    return result
+
+
+def tool_plot(
+    csv_path: str,
+    x_col: str,
+    y_cols: list[str],
+    output_path: str | None = None,
+    mode: str = "single",
+    hue_col: str | None = None,
+    markers: bool = False,
+    legend_loc: str = "best",
+    subscript: bool = False,
+    config_path: str | None = None,
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
+    figsize: tuple[int, int] | str | None = None,
+    dpi: int | None = None,
+    plot_type: str = "line",
+    size_col: str | None = None,
+    color_col: str | None = None,
+    cmap: str = "tab10",
+    levels: int = 20,
+    filled: bool = True,
+    annot: bool = False,
+    elev: int = 30,
+    azim: int = 45,
+    legend_type: str = "auto",
+    legend_labels: list[str] | None = None,
+    legend_suffix: str = "",
+    yerr_col: str | None = None,
+) -> dict:
+    from lmpsmart.arrange.config import load_config
+    cfg = load_config(config_path) if config_path else None
+    if output_path is None:
+        # Infer case folder from csv_path: if it contains /arrange/ → plot goes to sibling /plot/
+        p = Path(csv_path)
+        if "/arrange/" in csv_path.replace("\\", "/") or "/output/" in csv_path.replace("\\", "/"):
+            case_root = p.parent.parent  # step up from /arrange/ or /output/<name>/
+            plot_root = case_root / "plot"
+        else:
+            plot_root = Path("output/plot")
+        output_path = str(plot_root / "plot1.png")
+    steps = _step(f"plot: x={x_col}, y={y_cols}")
+    df = pd.read_csv(csv_path)
+    fig_tuple: tuple[int, int] | None = None
+    if figsize is not None:
+        if isinstance(figsize, str):
+            w, h = figsize.split(",")
+            fig_tuple = (int(w.strip()), int(h.strip()))
+        else:
+            fig_tuple = figsize
+
+    # Dispatch on plot_type
+    if plot_type == "line":
+        tool_plot_dataframe(
+            df,
+            x_col=x_col,
+            y_cols=y_cols,
+            output_path=output_path,
+            mode=mode,
+            plotset=cfg.plotset if cfg else None,
+            hue_col=hue_col,
+            markers=markers,
+            legend_loc=legend_loc,
+            subscript_labels=subscript,
+            title=title,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            figsize=fig_tuple,
+            dpi=dpi,
+            legend_type=legend_type,
+            legend_labels=legend_labels,
+            legend_suffix=legend_suffix,
+            yerr_col=yerr_col,
+        )
+    elif plot_type == "scatter":
+        for yc in y_cols:
+            tool_plot_scatter(
+                df=df, output_path=output_path,
+                x_col=x_col, y_col=yc,
+                size_col=size_col, color_col=color_col,
+                hue_col=hue_col, title=title,
+                xlabel=xlabel, ylabel=ylabel,
+                figsize=fig_tuple, dpi=dpi,
+                palette=cmap, markers=markers,
+                legend_loc=legend_loc,
+            )
+    elif plot_type == "boxplot":
+        for yc in y_cols:
+            tool_plot_boxplot(
+                df=df, output_path=output_path,
+                x_col=x_col, y_col=yc,
+                hue_col=hue_col, title=title,
+                xlabel=xlabel, ylabel=ylabel,
+                figsize=fig_tuple, dpi=dpi,
+                palette=cmap, legend_loc=legend_loc,
+            )
+    elif plot_type == "violin":
+        for yc in y_cols:
+            tool_plot_violin(
+                df=df, output_path=output_path,
+                x_col=x_col, y_col=yc,
+                hue_col=hue_col, title=title,
+                xlabel=xlabel, ylabel=ylabel,
+                figsize=fig_tuple, dpi=dpi,
+                palette=cmap, legend_loc=legend_loc,
+            )
+    elif plot_type == "surface":
+        tool_plot_surface(
+            df=df, output_path=output_path,
+            x_col=x_col, y_col=y_cols[0], z_col=y_cols[1] if len(y_cols) > 1 else y_cols[0],
+            cmap=cmap, title=title,
+            xlabel=xlabel, ylabel=ylabel,
+            figsize=fig_tuple, dpi=dpi,
+            elev=elev, azim=azim,
+        )
+    elif plot_type == "contour":
+        tool_plot_contour(
+            df=df, output_path=output_path,
+            x_col=x_col, y_col=y_cols[0], z_col=y_cols[1] if len(y_cols) > 1 else y_cols[0],
+            levels=levels, cmap=cmap, filled=filled,
+            title=title, xlabel=xlabel, ylabel=ylabel,
+            figsize=fig_tuple, dpi=dpi,
+        )
+    elif plot_type == "heatmap":
+        tool_plot_heatmap(
+            df=df, output_path=output_path,
+            x_col=x_col, y_col=y_cols[0], value_col=y_cols[1] if len(y_cols) > 1 else y_cols[0],
+            cmap=cmap, annot=annot,
+            title=title, figsize=fig_tuple, dpi=dpi,
+        )
+    else:
+        raise ValueError(f"Unknown plot_type: {plot_type!r}")
+
+    # Export plot data CSV alongside the figure (same name, .csv extension)
+    csv_out = Path(output_path).with_suffix(".csv")
+    os.makedirs(csv_out.parent, exist_ok=True)
+    df[[x_col] + y_cols].to_csv(csv_out, index=False)
+
+    get_logger().log("plot", {"x_col": x_col, "y_cols": y_cols, "plot_type": plot_type}, steps, {"output": output_path, "csv": str(csv_out)}, status="success")
+    return {"status": "success", "output": output_path, "csv": str(csv_out)}
+
+
+def tool_animation(
+    csv_path: str,
+    mode: str,
+    x_col: str,
+    y_col: str,
+    z_col: str | None = None,
+    value_col: str | None = None,
+    hue_col: str | None = None,
+    output_path: str | None = None,
+    config_path: str | None = None,
+    interval: int = 200,
+    frames: list[int] | None = None,
+    repeat: bool = False,
+    figsize: tuple[int, int] | str | None = None,
+    dpi: int | None = None,
+    cmap: str = "rainbow",
+    isoset: list[float] | None = None,
+    barscale: float = 0.5,
+    scatterscale: float = 1.0,
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
+    zlabel: str = "",
+) -> dict:
+    from lmpsmart.arrange.config import load_config
+    cfg = load_config(config_path) if config_path else None
+    if output_path is None:
+        p = Path(csv_path)
+        if "/arrange/" in csv_path.replace("\\", "/") or "/output/" in csv_path.replace("\\", "/"):
+            case_root = p.parent.parent
+            anim_root = case_root / "animation"
+        else:
+            anim_root = Path("output/animation")
+        output_path = str(anim_root / "animation.gif")
+    steps = _step(f"animation: mode={mode}, x={x_col}, y={y_col}")
+    df = pd.read_csv(csv_path)
+    fig_tuple: tuple[int, int] | None = None
+    if figsize is not None:
+        if isinstance(figsize, str):
+            w, h = figsize.split(",")
+            fig_tuple = (int(w.strip()), int(h.strip()))
+        else:
+            fig_tuple = figsize
+    result = tool_plot_animation(
+        df=df,
+        output_path=output_path,
+        mode=mode,
+        x_col=x_col,
+        y_col=y_col,
+        z_col=z_col,
+        value_col=value_col,
+        hue_col=hue_col,
+        frames=frames,
+        interval=interval,
+        repeat=repeat,
+        figsize=fig_tuple,
+        dpi=dpi,
+        cmap=cmap,
+        isoset=isoset,
+        barscale=barscale,
+        scatterscale=scatterscale,
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        zlabel=zlabel,
+        config_path=config_path,
+    )
+    # Export animation data CSV alongside the figure (same name, .csv extension)
+    cols = [x_col, y_col]
+    if z_col:
+        cols.append(z_col)
+    if value_col:
+        cols.append(value_col)
+    if output_path:
+        csv_out = Path(output_path).with_suffix(".csv")
+        os.makedirs(csv_out.parent, exist_ok=True)
+        df[[c for c in cols if c in df.columns]].to_csv(csv_out, index=False)
+        result["csv"] = str(csv_out)
+    get_logger().log("animation", {"mode": mode, "x_col": x_col, "y_col": y_col}, steps, result, status="success")
+    return result
+
+
+def tool_groupby_aggregate(
+    csv_path: str,
+    group_col: str,
+    agg_col: str,
+    agg_func: str = "mean",
+    output_path: str | None = None,
+) -> dict:
+    steps = _step(f"groupby_aggregate: {group_col}.{agg_col}.{agg_func}")
+    result = groupby_aggregate(csv_path, group_col, agg_col, agg_func, output_path)
+    get_logger().log("groupby_aggregate", {"group_col": group_col, "agg_col": agg_col},
+                     steps, result, status="success")
+    return {"status": "success", **result}
+
+
+def tool_belong_filter(
+    csv_path: str,
+    col: str,
+    values: list,
+    keep: bool = True,
+    output_path: str | None = None,
+) -> dict:
+    steps = _step(f"belong_filter: {col} in {values}")
+    result = belong_filter(csv_path, col, values, keep, output_path)
+    get_logger().log("belong_filter", {"col": col, "values": values}, steps, result, status="success")
+    return {"status": "success", **result}
+
+
+def tool_column_rename(
+    csv_path: str,
+    rename_map: dict,
+    output_path: str | None = None,
+) -> dict:
+    steps = _step(f"column_rename: {rename_map}")
+    result = column_rename(csv_path, rename_map, output_path)
+    get_logger().log("column_rename", {"rename_map": rename_map}, steps, result, status="success")
+    return {"status": "success", **result}
+
+
+def tool_select_columns(
+    csv_path: str,
+    columns: list[str],
+    output_path: str | None = None,
+) -> dict:
+    steps = _step(f"select_columns: {columns}")
+    result = select_columns(csv_path, columns, output_path)
+    get_logger().log("select_columns", {"columns": columns}, steps, result, status="success")
+    return {"status": "success", **result}
+
+
+def tool_merge_data(
+    csv_paths: list[str],
+    how: str = "concat",
+    on_col: str | None = None,
+    output_path: str | None = None,
+) -> dict:
+    steps = _step(f"merge_data: {len(csv_paths)} files, how={how}")
+    result = merge_data(csv_paths, how, on_col, output_path)
+    get_logger().log("merge_data", {"how": how, "files": len(csv_paths)}, steps, result, status="success")
+    return {"status": "success", **result}
+
+
 # chem tools (5)
 def tool_molecular_weight(formula: str) -> float:
     steps = _step(f"molecular_weight: {formula}")
@@ -211,6 +533,14 @@ TOOL_REGISTRY = {
     "read_general": tool_read_general,
     "smooth": tool_smooth,
     "filter_outliers": tool_filter_outliers,
+    "fit": tool_fit,
+    "plot": tool_plot,
+    "animation": tool_animation,
+    "groupby_aggregate": tool_groupby_aggregate,
+    "belong_filter": tool_belong_filter,
+    "column_rename": tool_column_rename,
+    "select_columns": tool_select_columns,
+    "merge_data": tool_merge_data,
     "molecular_weight": tool_molecular_weight,
     "find_elements": tool_find_elements,
     "atom_type": tool_atom_type,

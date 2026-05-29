@@ -121,6 +121,7 @@ filerule2:
 plotset:
   sns_style: ticks
   palette: tab10
+  font_family: "Times New Roman"
   multifig:
     width: 14
     high: 6
